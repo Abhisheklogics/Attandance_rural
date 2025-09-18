@@ -147,11 +147,11 @@ useEffect(() => {
         <video
           ref={videoRef}
           autoPlay
-          muted
-          crossOrigin="anonymous"
-          className="appvide"
-          width={640}
+           crossOrigin="anonymous"
+           width={640}
           height={480}
+          muted
+  
         />
         <canvas
           ref={canvasRef}
