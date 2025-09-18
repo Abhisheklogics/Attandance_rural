@@ -35,13 +35,33 @@ export default function Attendance() {
   }, []);
 
   const startVideo = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err) {
-      console.error("Camera error:", err);
+  try {
+    
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user" },
+      audio: false,
+    });
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
     }
-  };
+  } catch (err) {
+    console.warn("Front camera failed, falling back:", err);
+
+ 
+    try {
+      const fallbackStream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false,
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = fallbackStream;
+      }
+    } catch (err2) {
+      console.error("Camera error:", err2);
+      alert("Could not access camera. Check permissions or HTTPS.");
+    }
+  }
+};
 
   const onPlay = async () => {
     const video = videoRef.current;

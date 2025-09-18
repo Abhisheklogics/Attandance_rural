@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import * as faceapi from "face-api.js";
 import toast, { Toaster } from "react-hot-toast";
-
+import loadModels from '../../helper.js'
 
 function page() {
   const videoRef = useRef(null);
@@ -15,14 +15,10 @@ function page() {
 
  
   useEffect(() => {
-    const loadModels = async () => {
+    const load = async () => {
       try {
         toast.loading("Loading face detection models...");
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
-          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-        ]);
+       await loadModels()
         toast.dismiss();
         toast.success("Models loaded!");
         startVideo();
@@ -31,21 +27,35 @@ function page() {
         console.error(err);
       }
     };
-    loadModels();
+    load();
   }, []);
 
  
-  function startVideo(){
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch((err) => {
-        toast.error("Camera error");
-        console.error(err);
-      });
-  };
+  function startVideo() {
+  navigator.mediaDevices
+    .getUserMedia({
+      video: {
+        facingMode: { exact: "user" }, 
+      },
+    })
+    .then((stream) => {
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    })
+    .catch((err) => {
+      console.warn("Front camera failed, trying any camera:", err);
+      
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        })
+        .catch((err2) => {
+          toast.error("Camera error");
+          console.error(err2);
+        });
+    });
+}
+
 
 
   useEffect(() => {
