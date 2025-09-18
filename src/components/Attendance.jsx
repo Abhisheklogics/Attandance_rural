@@ -3,13 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 export default function Attendance() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [students, setStudents] = useState([]);
   const [matcher, setMatcher] = useState(null);
   const [recognized, setRecognized] = useState(null);
-
+ const router = useRouter();
 
   useEffect(() => {
     const load = async () => {
@@ -35,25 +36,17 @@ export default function Attendance() {
   }, []);
 
   
- async function startVideo() {
-  try {
-    
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "user" } }, 
-    });
-    if (videoRef.current) videoRef.current.srcObject = stream;
-  } catch (err) {
-    console.warn("Front camera failed, using default:", err);
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err2) {
-      console.error("No camera available:", err2);
-      toast.error("Camera not accessible");
-    }
-  }
-}
+   function startVideo(){
+     navigator.mediaDevices
+       .getUserMedia({ video: true })
+       .then((stream) => {
+         if (videoRef.current) videoRef.current.srcObject = stream;
+       })
+       .catch((err) => {
+         toast.error("Camera error");
+         console.error(err);
+       });
+   };
 
   const onPlay = async () => {
     const video = videoRef.current;
@@ -121,6 +114,7 @@ export default function Attendance() {
         }),
       });
       alert(`Attendance marked for ${recognized.name}`);
+       router.push("/ShowAllStudents");
     } catch (err) {
       console.error("Mark attendance failed:", err);
     }

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 function page() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-const router = useRouter();
+ const router = useRouter();
   const [student, setStudent] = useState({ name: "", roll: "", class: "" });
   const [loading, setLoading] = useState(false);
   const [embeddingsArray, setEmbeddingsArray] = useState([]);
@@ -35,26 +35,17 @@ const router = useRouter();
   }, []);
 
  
- async function startVideo() {
-  try {
-    
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "user" } }, 
-    });
-    if (videoRef.current) videoRef.current.srcObject = stream;
-  } catch (err) {
-    console.warn("Front camera failed, using default:", err);
-  
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err2) {
-      console.error("No camera available:", err2);
-      toast.error("Camera not accessible");
-    }
-  }
-}
-
+  function startVideo(){
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      })
+      .catch((err) => {
+        toast.error("Camera error");
+        console.error(err);
+      });
+  };
 
 
   useEffect(() => {
@@ -130,11 +121,9 @@ const router = useRouter();
         });
         const data = await res.json();
         alert(data.message || " Student registered successfully!");
-
         setEmbeddingsArray([]);
           setStudent('');
-          router.push("/");
-        
+         router.push("/");
       }
     } catch (err) {
       console.error(err);
@@ -153,7 +142,6 @@ const router = useRouter();
           ref={videoRef}
           autoPlay
           muted
-          playsInline
           crossOrigin="anonymous"
           className="appvide"
           width={640}
