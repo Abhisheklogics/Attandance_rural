@@ -36,30 +36,13 @@ export default function Attendance() {
   }, []);
 
   
-   function startVideo() {
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: { exact: "user" }, 
-      },
-    })
-    .then((stream) => {
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    })
-    .catch((err) => {
-      console.warn("Front camera failed, trying any camera:", err);
-      
+  
+    const startVideo = () => {
       navigator.mediaDevices
         .getUserMedia({ video: true })
-        .then((stream) => {
-          if (videoRef.current) videoRef.current.srcObject = stream;
-        })
-        .catch((err2) => {
-          toast.error("Camera error");
-          console.error(err2);
-        });
-    });
-} 
+        .then((stream) => (videoRef.current.srcObject = stream))
+        .catch((err) => console.error("Camera error:", err));
+    };
 
   const onPlay = async () => {
     const video = videoRef.current;

@@ -35,30 +35,18 @@ function page() {
   }, []);
 
  
-  function startVideo() {
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: { exact: "user" }, 
-      },
-    })
-    .then((stream) => {
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    })
-    .catch((err) => {
-      console.warn("Front camera failed, trying any camera:", err);
-      
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
-          if (videoRef.current) videoRef.current.srcObject = stream;
-        })
-        .catch((err2) => {
-          toast.error("Camera error");
-          console.error(err2);
-        });
-    });
-} 
+  
+    function startVideo(){
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => {
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      })
+      .catch((err) => {
+        toast.error("Camera error");
+        console.error(err);
+      });
+  };
 
 
   useEffect(() => {
@@ -150,7 +138,7 @@ function page() {
     <div className="myapp">
       <Toaster position="top-right" />
       <h1>Student Face Registration</h1>
-      <div className="appvide">
+       <div className="appvide">
         <video
           ref={videoRef}
           autoPlay
@@ -167,6 +155,7 @@ function page() {
           height={480}
         />
       </div>
+
 
       <form className="student-form" onSubmit={(e) => e.preventDefault()}>
         <input
