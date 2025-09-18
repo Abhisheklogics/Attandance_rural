@@ -138,12 +138,12 @@ function page() {
     <div className="myapp">
       <Toaster position="top-right" />
       <h1>Student Face Registration</h1>
-       <div className="appvide">
+       <div>
         <video
           ref={videoRef}
           autoPlay
           muted
-          crossOrigin="anonymous"
+          
           className="appvide"
           width={640}
           height={480}
