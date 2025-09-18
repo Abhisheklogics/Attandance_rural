@@ -120,13 +120,13 @@ function Attendance() {
         Real-Time Attendance
       </h1>
 
-      <div className="relative w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden border-4 border-white">
+      <div className=" w-[600px] h-[600px] rounded-xl shadow-2xl overflow-hidden border-4 border-white">
         <video
           ref={videoRef}
           autoPlay
           muted
           crossOrigin="anonymous"
-          className="w-full h-auto"
+          className="w-[600px] h-[600px]"
           onPlay={handleVideoPlay}
         />
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
