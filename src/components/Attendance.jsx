@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
-import toast, { Toaster } from "react-hot-toast";
+
 import { useRouter } from "next/navigation";
 export default function Attendance() {
   const videoRef = useRef(null);
