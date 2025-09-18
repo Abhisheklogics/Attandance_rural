@@ -3,12 +3,12 @@
 import { useRef, useEffect, useState } from "react";
 import * as faceapi from "face-api.js";
 import toast, { Toaster } from "react-hot-toast";
-
+import { useRouter } from "next/navigation";
 
 function page() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-
+const router = useRouter();
   const [student, setStudent] = useState({ name: "", roll: "", class: "" });
   const [loading, setLoading] = useState(false);
   const [embeddingsArray, setEmbeddingsArray] = useState([]);
@@ -35,30 +35,26 @@ function page() {
   }, []);
 
  
-  function startVideo() {
-  navigator.mediaDevices
-    .getUserMedia({
-      video: {
-        facingMode: { exact: "user" }, 
-      },
-    })
-    .then((stream) => {
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    })
-    .catch((err) => {
-      console.warn("Front camera failed, trying any camera:", err);
-      
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then((stream) => {
-          if (videoRef.current) videoRef.current.srcObject = stream;
-        })
-        .catch((err2) => {
-          toast.error("Camera error");
-          console.error(err2);
-        });
+ async function startVideo() {
+  try {
+    
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "user" } }, 
     });
+    if (videoRef.current) videoRef.current.srcObject = stream;
+  } catch (err) {
+    console.warn("Front camera failed, using default:", err);
+  
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch (err2) {
+      console.error("No camera available:", err2);
+      toast.error("Camera not accessible");
+    }
+  }
 }
+
 
 
   useEffect(() => {
@@ -134,8 +130,10 @@ function page() {
         });
         const data = await res.json();
         alert(data.message || " Student registered successfully!");
+
         setEmbeddingsArray([]);
           setStudent('');
+          router.push("/");
         
       }
     } catch (err) {
@@ -155,6 +153,7 @@ function page() {
           ref={videoRef}
           autoPlay
           muted
+          playsInline
           crossOrigin="anonymous"
           className="appvide"
           width={640}

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
-
+import toast, { Toaster } from "react-hot-toast";
 export default function Attendance() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -34,34 +34,26 @@ export default function Attendance() {
     load();
   }, []);
 
-  const startVideo = async () => {
+  
+ async function startVideo() {
   try {
     
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" },
-      audio: false,
+      video: { facingMode: { ideal: "user" } }, 
     });
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
-    }
+    if (videoRef.current) videoRef.current.srcObject = stream;
   } catch (err) {
-    console.warn("Front camera failed, falling back:", err);
-
- 
+    console.warn("Front camera failed, using default:", err);
+  
     try {
-      const fallbackStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = fallbackStream;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err2) {
-      console.error("Camera error:", err2);
-      alert("Could not access camera. Check permissions or HTTPS.");
+      console.error("No camera available:", err2);
+      toast.error("Camera not accessible");
     }
   }
-};
+}
 
   const onPlay = async () => {
     const video = videoRef.current;
