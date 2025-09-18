@@ -18,7 +18,11 @@ function page() {
     const load = async () => {
       try {
         toast.loading("Loading face detection models...");
-       await loadModels()
+       await Promise.all([
+              faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+              faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+              faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+            ]);
         toast.dismiss();
         toast.success("Models loaded!");
         startVideo();
@@ -35,7 +39,7 @@ function page() {
   navigator.mediaDevices
     .getUserMedia({
       video: {
-        facingMode: { exact: "user" }, 
+        facingMode: { exact: "user" }, // explicitly request front camera
       },
     })
     .then((stream) => {
