@@ -138,7 +138,7 @@ function page() {
     <div className="myapp">
       <Toaster position="top-right" />
       <h1>Student Face Registration</h1>
-       <div className="appvide">
+       <div>
         <video
           ref={videoRef}
           autoPlay
