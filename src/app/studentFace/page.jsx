@@ -18,11 +18,11 @@ function page() {
     const load = async () => {
       try {
         toast.loading("Loading face detection models...");
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
-          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-        ]);
+         await Promise.all([
+               faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+               faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+               faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+             ]);
         toast.dismiss();
         toast.success("Models loaded!");
         startVideo();
@@ -35,17 +35,30 @@ function page() {
   }, []);
 
  
-  function startVideo(){
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch((err) => {
-        toast.error("Camera error");
-        console.error(err);
-      });
-  };
+  function startVideo() {
+  navigator.mediaDevices
+    .getUserMedia({
+      video: {
+        facingMode: { exact: "user" }, 
+      },
+    })
+    .then((stream) => {
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    })
+    .catch((err) => {
+      console.warn("Front camera failed, trying any camera:", err);
+      
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          if (videoRef.current) videoRef.current.srcObject = stream;
+        })
+        .catch((err2) => {
+          toast.error("Camera error");
+          console.error(err2);
+        });
+    });
+} 
 
 
   useEffect(() => {
@@ -123,7 +136,7 @@ function page() {
         alert(data.message || " Student registered successfully!");
         setEmbeddingsArray([]);
           setStudent('');
-         router.push("/");
+        router.push("/ShowAllStudents");
       }
     } catch (err) {
       console.error(err);
@@ -187,4 +200,4 @@ function page() {
   );
 }
 
-export default page;
+export default page; 
