@@ -14,25 +14,30 @@ function page() {
   const [embeddingsArray, setEmbeddingsArray] = useState([]);
 
  
-  useEffect(() => {
-    const load = async () => {
-      try {
-        toast.loading("Loading face detection models...");
-         await Promise.all([
-               faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
-               faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-               faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-             ]);
-        toast.dismiss();
-        toast.success("Models loaded!");
-        startVideo();
-      } catch (err) {
-        toast.error("Failed to load models.");
-        console.error(err);
-      }
-    };
-    load();
-  }, []);
+useEffect(() => {
+  const load = async () => {
+    try {
+      toast.loading("Loading face detection models...");
+
+      await Promise.all([
+        faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
+        faceapi.nets.tinyFaceDetector.loadFromUri("/models"), 
+        faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+        faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+      ]);
+
+      toast.dismiss();
+      toast.success("Models loaded!");
+      startVideo();
+    } catch (err) {
+      toast.error("Failed to load models.");
+      console.error(err);
+    }
+  };
+
+  load();
+}, []);
+
 
  
   
@@ -124,7 +129,7 @@ function page() {
         alert(data.message || " Student registered successfully!");
         setEmbeddingsArray([]);
           setStudent('');
-        router.push("/ShowAllStudents");
+        router.push("/");
       }
     } catch (err) {
       console.error(err);
