@@ -11,7 +11,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex flex-col items-center justify-center px-6">
      
       <h1 className="text-4xl md:text-5xl font-extrabold mb-6 text-center">
-        Smart Face Attendance for Rural
+        Smart Face Attendance for Rural Schools
       </h1>
       <p className="text-gray-400 max-w-xl text-center mb-10">
         Simple and reliable face-recognition based attendance system designed
@@ -25,7 +25,7 @@ export default function Home() {
           className="group bg-gray-800 hover:bg-gray-700 rounded-2xl p-8 text-center shadow-lg transition transform hover:scale-105"
         >
           <h2 className="text-2xl font-semibold mb-3 group-hover:text-yellow-400">
-           Hazzri Lagva
+          Hazri Lagao
           </h2>
           <p className="text-gray-400 text-sm">
             Mark attendance quickly with face recognition.
@@ -37,7 +37,7 @@ export default function Home() {
           className="group bg-gray-800 hover:bg-gray-700 rounded-2xl p-8 text-center shadow-lg transition transform hover:scale-105"
         >
           <h2 className="text-2xl font-semibold mb-3 group-hover:text-green-400">
-            Hazzri Dekh
+           Dekho Hazri
           </h2>
           <p className="text-gray-400 text-sm">
             View all registered students and their details.
@@ -49,7 +49,7 @@ export default function Home() {
           className="group bg-gray-800 hover:bg-gray-700 rounded-2xl p-8 text-center shadow-lg transition transform hover:scale-105"
         >
           <h2 className="text-2xl font-semibold mb-3 group-hover:text-blue-400">
-            Student Face Registration
+           Face Se Register Karo
           </h2>
           <p className="text-gray-400 text-sm">
             Register new students with their facial data.
