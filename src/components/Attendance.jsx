@@ -1,148 +1,155 @@
-'use client'
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 
-function Attendance() {
-  const videoRef = useRef();
-  const canvasRef = useRef();
+export default function Attendance() {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const [students, setStudents] = useState([]);
-  const [faceMatcher, setFaceMatcher] = useState(null);
-  const [currentStudent, setCurrentStudent] = useState(null);
+  const [matcher, setMatcher] = useState(null);
+  const [recognized, setRecognized] = useState(null);
+
 
   useEffect(() => {
-    const loadModelsAndData = async () => {
+    const load = async () => {
       await Promise.all([
         faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
         faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
-      startVideo();
 
       const res = await fetch("/api/students");
       const data = await res.json();
       setStudents(data);
 
-      const labeledDescriptors = data.map((stu) => {
+      const labeled = data.map((stu) => {
         const descriptors = stu.embeddings.map((emb) => new Float32Array(emb));
         return new faceapi.LabeledFaceDescriptors(stu.name, descriptors);
       });
+      setMatcher(new faceapi.FaceMatcher(labeled, 0.5));
 
-      const matcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
-      setFaceMatcher(matcher);
+      startVideo();
     };
-
-    loadModelsAndData();
+    load();
   }, []);
 
-  const startVideo = () => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => (videoRef.current.srcObject = stream))
-      .catch((err) => console.error("Camera error:", err));
+  const startVideo = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch (err) {
+      console.error("Camera error:", err);
+    }
   };
 
-  const handleVideoPlay = () => {
-    const canvas = canvasRef.current;
+  const onPlay = async () => {
     const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !matcher) return;
+
     const displaySize = { width: video.videoWidth, height: video.videoHeight };
     faceapi.matchDimensions(canvas, displaySize);
 
-    const interval = setInterval(async () => {
-      if (!faceMatcher) return;
+    const detect = async () => {
+      if (video.paused || video.ended) return;
 
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
         .withFaceLandmarks()
         .withFaceDescriptors();
 
-      const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
+      const resized = faceapi.resizeResults(detections, displaySize);
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (resizedDetections.length > 0) {
-        const detection = resizedDetections[0]; 
-        const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-        const studentObj = students.find((s) => s.name === bestMatch.label);
+      let bestStudent = null;
 
-        const displayText = studentObj
-          ? `${bestMatch.label} - Class: ${studentObj.class}`
-          : "Unknown";
+      resized.forEach((det) => {
+        const best = matcher.findBestMatch(det.descriptor);
+        const matchedStudent = students.find((s) => s.name === best.label);
+        const box = det.detection.box;
 
-        const box = detection.detection.box;
-        ctx.strokeStyle = studentObj ? "#22c55e" : "#ef4444";
+        ctx.strokeStyle = matchedStudent ? "#22c55e" : "#ef4444";
         ctx.lineWidth = 3;
         ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-        ctx.fillStyle = studentObj ? "rgba(34, 197, 94, 0.7)" : "rgba(239, 68, 68, 0.7)";
-        const textWidth = ctx.measureText(displayText).width;
-        ctx.fillRect(box.x, box.y - 24, textWidth + 10, 24);
+        const label = matchedStudent
+          ? `${matchedStudent.name} (${matchedStudent.class})`
+          : "Unknown";
 
-        ctx.fillStyle = "#fff";
         ctx.font = "18px Arial";
-        ctx.fillText(displayText, box.x + 5, box.y - 5);
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(box.x, box.y - 28, ctx.measureText(label).width + 10, 24);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, box.x + 5, box.y - 10);
 
-       
-        setCurrentStudent(studentObj || null);
-      } else {
-        setCurrentStudent(null);
-      }
-    }, 200);
+        if (matchedStudent) bestStudent = matchedStudent;
+      });
 
-    return () => clearInterval(interval);
+     
+      setRecognized(bestStudent);
+
+      requestAnimationFrame(detect);
+    };
+
+    requestAnimationFrame(detect);
   };
 
   const markAttendance = async () => {
-    if (!currentStudent) return;
-
+    if (!recognized) return alert("No student recognized!");
     try {
-      const res = await fetch("/api/mark", {
+      await fetch("/api/mark", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: currentStudent.name,
-          roll: currentStudent.roll,
-          className: currentStudent.class,
+          name: recognized.name,
+          roll: recognized.roll,
+          className: recognized.class,
         }),
       });
-      const data = await res.json();
-      alert(data.message || "Attendance marked!");
+      alert(`Attendance marked for ${recognized.name}`);
     } catch (err) {
-      console.error(err);
-      alert("Failed to mark attendance.");
+      console.error("Mark attendance failed:", err);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-r from-indigo-500 to-purple-500 p-4">
-      <h1 className="text-3xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg">
-        Real-Time Attendance
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-10 px-4">
+      <h1 className="text-4xl font-extrabold mb-6 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+        Smart Face Attendance
       </h1>
 
-      <div className=" w-[600px] h-[600px] rounded-xl shadow-2xl overflow-hidden border-4 border-white">
+      <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-700 backdrop-blur-md">
         <video
           ref={videoRef}
           autoPlay
           muted
-          crossOrigin="anonymous"
-          className="w-[600px] h-[600px]"
-          onPlay={handleVideoPlay}
+          playsInline
+          onPlay={onPlay}
+          className="w-[90vw] max-w-xl aspect-video rounded-2xl bg-black"
         />
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
+        <canvas
+          ref={canvasRef}
+          width={640}
+          height={480}
+          className="absolute top-0 left-0 w-full h-full"
+        />
       </div>
+
+      <p className="mt-4 text-sm text-gray-400">
+        {recognized
+          ? `Recognized: ${recognized.name} (${recognized.class})`
+          : "Look at the camera to detect your face."}
+      </p>
 
       <button
         onClick={markAttendance}
-        disabled={!currentStudent}
-        className={`mt-6 px-6 py-3 font-bold rounded-lg shadow-lg text-white ${
-          currentStudent ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 cursor-not-allowed"
-        }`}
+        disabled={!recognized}
+        className="mt-6 px-6 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 transition-all shadow-lg"
       >
-        {currentStudent ? `Mark Attendance for ${currentStudent.name}` : "No student detected"}
+        Mark Attendance
       </button>
     </div>
   );
 }
-
-export default Attendance;
