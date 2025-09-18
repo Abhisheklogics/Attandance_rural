@@ -59,7 +59,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="mt-16 text-sm text-gray-500">
-        © 2025 Face Attendance for Rural — Hackathon Prototype
+        © 2025 Face Attendance for Rural Schools — Hackathon Prototype
       </footer>
     </main>
   );

@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import * as faceapi from "face-api.js";
 import toast, { Toaster } from "react-hot-toast";
-import loadModels from '../../helper.js'
+
 
 function page() {
   const videoRef = useRef(null);
@@ -18,11 +18,11 @@ function page() {
     const load = async () => {
       try {
         toast.loading("Loading face detection models...");
-       await Promise.all([
-              faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
-              faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-              faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-            ]);
+        await Promise.all([
+          faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
+          faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+          faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+        ]);
         toast.dismiss();
         toast.success("Models loaded!");
         startVideo();
@@ -39,7 +39,7 @@ function page() {
   navigator.mediaDevices
     .getUserMedia({
       video: {
-        facingMode: { exact: "user" }, // explicitly request front camera
+        facingMode: { exact: "user" }, 
       },
     })
     .then((stream) => {
@@ -59,7 +59,6 @@ function page() {
         });
     });
 }
-
 
 
   useEffect(() => {
