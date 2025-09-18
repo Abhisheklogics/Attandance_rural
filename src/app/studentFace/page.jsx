@@ -142,6 +142,9 @@ function page() {
         <video
           ref={videoRef}
           autoPlay
+           crossOrigin="anonymous"
+           width={640}
+          height={480}
           muted
   
         />
