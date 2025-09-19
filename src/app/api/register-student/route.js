@@ -9,7 +9,7 @@ export async function POST(req) {
     const { name, roll, class: className, embeddings } = await req.json();
 
 
-    if (!name || !roll || !className || !embeddings || embeddings.length !== 3) {
+    if (!name || !roll || !className || !embeddings || embeddings.length !== 2) {
       return new Response(
         JSON.stringify({ message: "Missing required fields or less than 3 embeddings." }),
         { status: 400 }

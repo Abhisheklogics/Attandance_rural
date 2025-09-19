@@ -115,9 +115,9 @@ useEffect(() => {
 
       const updatedEmbeddings = [...embeddingsArray, embedding];
       setEmbeddingsArray(updatedEmbeddings);
-      toast.success(`Photo captured! (${updatedEmbeddings.length}/3)`);
+      toast.success(`Photo captured! (${updatedEmbeddings.length}/2)`);
 
-    if (embeddingsArray.length + 1 === 3) {
+    if (embeddingsArray.length + 1 === 2) {
         
         const payload = { ...student, embeddings: [...embeddingsArray, embedding] };
         const res = await fetch("/api/register-student", {
@@ -140,57 +140,77 @@ useEffect(() => {
   };
 
   return (
-    <div className="myapp">
-      <Toaster position="top-right" />
-      <h1>Student Face Registration</h1>
-       <div className="appvide">
-        <video
-          ref={videoRef}
-          autoPlay
-           crossOrigin="anonymous"
-           width={640}
-          height={480}
-          muted
-  
-        />
-        <canvas
-          ref={canvasRef}
-          className="appcanvas"
-          width={640}
-          height={480}
-        />
-      </div>
+    <div className="flex flex-col items-center justify-center px-4 py-6 sm:px-6">
+  <Toaster position="top-right" />
 
+  <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">
+    Student Face Registration
+  </h1>
 
-      <form className="student-form" onSubmit={(e) => e.preventDefault()}>
-        <input
-          type="text"
-          placeholder="Name"
-          value={student.name}
-          onChange={(e) => setStudent({ ...student, name: e.target.value })}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Roll Number"
-          value={student.roll}
-          onChange={(e) => setStudent({ ...student, roll: e.target.value })}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Class"
-          value={student.class}
-          onChange={(e) => setStudent({ ...student, class: e.target.value })}
-          required
-        />
-        <button type="button" onClick={capturePhoto} disabled={loading}>
-          {loading
-            ? "Capturing..."
-            : `Capture Photo (${embeddingsArray.length}/3)`}
-        </button>
-      </form>
-    </div>
+  {/* Video and Canvas Container */}
+  <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-md mb-6">
+    <video
+      ref={videoRef}
+      autoPlay
+      crossOrigin="anonymous"
+      width={640}
+      height={480}
+      muted
+      className="w-full h-auto rounded-2xl"
+    />
+    <canvas
+      ref={canvasRef}
+      width={640}
+      height={480}
+      className="absolute top-0 left-0 w-full h-full pointer-events-none rounded-2xl"
+    />
+  </div>
+
+  {/* Student Form */}
+  <form
+    className="w-full max-w-md flex flex-col gap-4 bg-white shadow-lg rounded-2xl p-6"
+    onSubmit={(e) => e.preventDefault()}
+  >
+    <input
+      type="text"
+      placeholder="Name"
+      value={student.name}
+      onChange={(e) => setStudent({ ...student, name: e.target.value })}
+      required
+      className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
+    />
+    <input
+      type="text"
+      placeholder="Roll Number"
+      value={student.roll}
+      onChange={(e) => setStudent({ ...student, roll: e.target.value })}
+      required
+      className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
+    />
+    <input
+      type="text"
+      placeholder="Class"
+      value={student.class}
+      onChange={(e) => setStudent({ ...student, class: e.target.value })}
+      required
+      className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
+    />
+    <button
+      type="button"
+      onClick={capturePhoto}
+      disabled={loading}
+      className={`w-full py-2 rounded-lg font-semibold text-white transition-all duration-300 ${
+        loading
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-blue-500 hover:bg-blue-600 active:scale-95"
+      }`}
+    >
+      {loading
+        ? "Capturing..."
+        : `Capture Photo (${embeddingsArray.length}/2)`}
+    </button>
+  </form>
+</div>
   );
 }
 
