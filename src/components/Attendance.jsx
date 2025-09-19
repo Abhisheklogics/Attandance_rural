@@ -12,8 +12,19 @@ export default function Attendance() {
   const [recognizedList, setRecognizedList] = useState([]);
   const [facingMode, setFacingMode] = useState("user"); 
   const [detecting, setDetecting] = useState(false);
+  const [inputSize, setInputSize] = useState(160); 
   const router = useRouter();
+ useEffect(() => {
+    function getAdaptiveInput() {
+      const width = window.innerWidth;
+      if (width < 768) {
+        return 160; 
+      }
+      return 224; 
+    }
 
+    setInputSize(getAdaptiveInput());
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -77,7 +88,7 @@ export default function Attendance() {
       }
 
       const detections = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 190, scoreThreshold: 0.5 }))
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: inputSize, scoreThreshold: 0.5 }))
         .withFaceLandmarks()
         .withFaceDescriptors();
 
