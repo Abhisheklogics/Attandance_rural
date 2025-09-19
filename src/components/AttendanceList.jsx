@@ -113,6 +113,7 @@ function AttendanceList() {
                   <td className="py-4 px-6">
                       {student.name ? 'Present':'Not Present'}
                   </td>
+                   <td className="py-4 px-6 font-mono">{student.timestamp}</td>
                 </tr>
               ))}
             </tbody>
