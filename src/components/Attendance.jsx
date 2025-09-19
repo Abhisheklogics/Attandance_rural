@@ -77,7 +77,7 @@ export default function Attendance() {
       }
 
       const detections = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 }))
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 190, scoreThreshold: 0.5 }))
         .withFaceLandmarks()
         .withFaceDescriptors();
 
@@ -149,14 +149,14 @@ export default function Attendance() {
         Smart Face Attendance
       </h1>
 
-      <div className="relative w-full max-w-lg aspect-video rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
+      <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-md mb-6">
         <video
           ref={videoRef}
           autoPlay
           muted
           playsInline
           onPlay={onPlay}
-          className="w-full h-full object-cover rounded-2xl bg-black"
+          className="w-full h-auto rounded-2xl"
         />
         <canvas
           ref={canvasRef}

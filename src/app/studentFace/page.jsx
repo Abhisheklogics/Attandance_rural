@@ -147,7 +147,7 @@ useEffect(() => {
     Student Face Registration
   </h1>
 
-  {/* Video and Canvas Container */}
+  
   <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-md mb-6">
     <video
       ref={videoRef}
@@ -166,9 +166,9 @@ useEffect(() => {
     />
   </div>
 
-  {/* Student Form */}
+ 
   <form
-    className="w-full max-w-md flex flex-col gap-4 bg-white shadow-lg rounded-2xl p-6"
+    className="w-full max-w-md flex flex-col gap-4 bg-gray-900 shadow-lg rounded-2xl p-6"
     onSubmit={(e) => e.preventDefault()}
   >
     <input
