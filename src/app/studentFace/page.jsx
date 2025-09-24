@@ -15,66 +15,59 @@ function page() {
 
  
 useEffect(() => {
-  const load = async () => {
-    try {
-      toast.loading("Loading face detection models...");
-
-      await Promise.all([
-        faceapi.nets.ssdMobilenetv1.loadFromUri("/models"),
-        faceapi.nets.tinyFaceDetector.loadFromUri("/models"), 
-        faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
-        faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-      ]);
-
-      toast.dismiss();
-      toast.success("Models loaded!");
-      startVideo();
-    } catch (err) {
-      toast.error("Failed to load models.");
-      console.error(err);
-    }
-  };
-
-  load();
-}, []);
-
+    const loadModels = async () => {
+      toast.loading("Loading models...");
+      try {
+        if (!faceapi.nets.tinyFaceDetector.isLoaded) {
+          await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+          await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+          await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+        }
+        toast.dismiss();
+        toast.success("Models ready!");
+        startVideo();
+      } catch (e) {
+        toast.error("Model loading failed.");
+      }
+    };
+    loadModels();
+  }, []);
 
  
   
-    function startVideo(){
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      })
-      .catch((err) => {
-        toast.error("Camera error");
-        console.error(err);
+  async function startVideo(retries = 3) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
       });
-  };
+      if (videoRef.current) videoRef.current.srcObject = stream;
+    } catch (err) {
+      if (retries) startVideo(retries - 1);
+      else toast.error("Camera not accessible.");
+    }
+  }
 
 
   useEffect(() => {
+    let frame = 0;
     const draw = async () => {
-      if (videoRef.current && canvasRef.current) {
+      frame++;
+      if (frame % 2 === 0 && videoRef.current && canvasRef.current) {
+        const inputSize = window.innerWidth < 600 ? 160 : 224;
         const detections = await faceapi
-          .detectAllFaces(
-            videoRef.current,
-            new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })
-          )
+          .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.5 }))
           .withFaceLandmarks();
         faceapi.matchDimensions(canvasRef.current, {
           width: videoRef.current.videoWidth,
-          height: videoRef.current.videoHeight,
+          height: videoRef.current.videoHeight
         });
         const resized = faceapi.resizeResults(detections, {
           width: videoRef.current.videoWidth,
-          height: videoRef.current.videoHeight,
+          height: videoRef.current.videoHeight
         });
         const ctx = canvasRef.current.getContext("2d");
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
         faceapi.draw.drawDetections(canvasRef.current, resized);
-        faceapi.draw.drawFaceLandmarks(canvasRef.current, resized);
       }
       requestAnimationFrame(draw);
     };
@@ -128,7 +121,7 @@ useEffect(() => {
         const data = await res.json();
         alert(data.message || " Student registered successfully!");
         setEmbeddingsArray([]);
-          setStudent('');
+       setStudent({ name: "", roll: "", class: "" });
         router.push("/");
       }
     } catch (err) {
@@ -216,3 +209,7 @@ useEffect(() => {
 }
 
 export default page; 
+
+
+
+

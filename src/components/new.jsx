@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-function newAttendanceList() {
+function NewAttendanceList() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
@@ -65,12 +65,10 @@ function newAttendanceList() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black p-6 text-gray-100 flex flex-col items-center">
+    <div className="md:ml-[-240px] min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black p-6 text-gray-100 flex flex-col items-center">
       
       
-      <h1 className="text-4xl sm:text-5xl font-extrabold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-lg animate-fade-in">
-        Attendance Records
-      </h1>
+    
 
       
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full max-w-md">
@@ -131,4 +129,4 @@ function newAttendanceList() {
   );
 }
 
-export default newAttendanceList;
+export default NewAttendanceList;
