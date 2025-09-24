@@ -1,13 +1,14 @@
 import connectToDb from "@/lib/DataBaseConnect.js";
 import Attendance from "@/model/attendance.model";
 
+
+
+
 export async function GET(req) {
   try {
     await connectToDb();
 
-    
     const { searchParams } = new URL(req.url);
-    console.log(searchParams)
     const className = searchParams.get("class");
 
     const query = className ? { class: className } : {};
@@ -21,7 +22,14 @@ export async function GET(req) {
       _id: 0
     });
 
-    return new Response(JSON.stringify(students), { status: 200 });
+ 
+
+    const studentsWithTime = students.map(student => ({
+      ...student.toObject()
+     
+    }));
+
+    return new Response(JSON.stringify(studentsWithTime), { status: 200 });
   } catch (err) {
     console.error("Error fetching attendance:", err);
     return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });

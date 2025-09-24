@@ -123,6 +123,7 @@ function AttendanceList() {
                   <td className={`py-4 px-6 font-semibold ${student.name ? "text-green-400" : "text-red-400"}`}>
                     {student.name ? "Present" : "Not Present"}
                   </td>
+                   
                 </tr>
               ))}
             </tbody>
