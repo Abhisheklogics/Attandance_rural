@@ -23,33 +23,10 @@ export default function Home() {
       {/* Action Cards */}
       <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full max-w-6xl">
         
-        {/* Take Attendance */}
-        <Link
-          href="/teacher"
-          className="group relative bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-3xl p-8 text-center shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-yellow-500/40 hover:from-yellow-400 hover:to-yellow-500 hover:-translate-y-2"
-        >
-          <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
-            Hazri Lagao
-          </h2>
-          <p className="text-gray-100 text-sm sm:text-base">
-            Quickly mark attendance using face recognition.
-          </p>
-        </Link>
+      
 
-        {/* View Attendance */}
-        <Link
-          href="/ShowAllStudents"
-          className="group relative bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-8 text-center shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-green-500/40 hover:from-green-400 hover:to-green-500 hover:-translate-y-2"
-        >
-          <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
-            Dekho Hazri
-          </h2>
-          <p className="text-gray-100 text-sm sm:text-base">
-            View all registered students and their attendance details.
-          </p>
-        </Link>
+      
+       
 
         {/* Register Students */}
         <Link
@@ -64,7 +41,19 @@ export default function Home() {
             Register new students by capturing their facial data.
           </p>
         </Link>
-
+  {/* Take Attendance */}
+        <Link
+          href="/teacher"
+          className="group relative bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-3xl p-8 text-center shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-yellow-500/40 hover:from-yellow-400 hover:to-yellow-500 hover:-translate-y-2"
+        >
+          <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
+            Hazri Lagao
+          </h2>
+          <p className="text-gray-100 text-sm sm:text-base">
+            Quickly mark attendance using face recognition.
+          </p>
+        </Link>
       </div>
 
       {/* Footer */}
