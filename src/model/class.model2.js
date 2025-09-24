@@ -1,17 +1,15 @@
 import mongoose from "mongoose";
 
-const studentSchema = new mongoose.Schema(
+const classSchema2 = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     roll: { type: String, required: true, unique: true },
     class: { type: String, required: true },
-    embeddings: { type: [[Number]], required: true }, // 2D array
+   embeddings: { type: [[Number]], required: true }, 
   },
   { timestamps: true }
 );
 
+const ClassTwo = mongoose.models.ClassTwo || mongoose.model("ClassTwo", classSchema2);
 
-const Student =
-  mongoose.models.Student || mongoose.model("Student", studentSchema);
-
-export default Student;
+export default ClassTwo;

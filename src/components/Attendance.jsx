@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 import { useRouter } from "next/navigation";
 
-export default function Attendance() {
+export default function Attendance({alldata}) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [students, setStudents] = useState([]);
@@ -14,6 +14,7 @@ export default function Attendance() {
   const [detecting, setDetecting] = useState(false);
   const [inputSize, setInputSize] = useState(160); 
   const router = useRouter();
+  
  useEffect(() => {
     function getAdaptiveInput() {
       const width = window.innerWidth;
@@ -34,8 +35,8 @@ export default function Attendance() {
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
 
-      const res = await fetch("/api/students");
-      const data = await res.json();
+      const res = await fetch(`/api/students?class=${alldata}`);
+    const data = await res.json();
       setStudents(data);
 
       const labeled = data.map((stu) => {
@@ -134,21 +135,23 @@ export default function Attendance() {
     if (!recognizedList.length) return alert("No students recognized!");
 
     try {
-      await Promise.all(
-        recognizedList.map((stu) =>
-          fetch("/api/mark", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: stu.name,
-              roll: stu.roll,
-              className: stu.class,
-            }),
-          })
-        )
-      );
+    await Promise.all(
+  recognizedList.map((stu) =>
+    fetch("/api/mark", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: stu.name,
+        roll: stu.roll,
+        className: stu.class,
+        timestamp: new Date().toISOString(), 
+      }),
+    })
+  )
+);
+
       alert(`Attendance marked for: ${recognizedList.map((s) => s.name).join(", ")}`);
-      router.push("/ShowAllStudents");
+      router.push(`/teacher/show-attandance`);
     } catch (err) {
       console.error("Mark attendance failed:", err);
     }

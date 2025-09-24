@@ -5,22 +5,20 @@ export async function POST(req) {
   try {
     await connectToDb();
 
-   
-    const { name, roll, className } = await req.json();
+    const { name, roll, className, timestamp } = await req.json();
 
-    
-    if (!name || !roll || !className) {
+    if (!name || !roll || !className || !timestamp) {
       return new Response(
         JSON.stringify({ message: "Missing required fields." }),
         { status: 400 }
       );
     }
 
-   
     const newEntry = await Attendance.create({
       name,
       roll,
       class: className,
+      timestamp: new Date(timestamp), // save as Date object
     });
 
     return new Response(
@@ -28,7 +26,7 @@ export async function POST(req) {
       { status: 201 }
     );
   } catch (err) {
-    console.error(" Error marking attendance:", err);
+    console.error("Error marking attendance:", err);
     return new Response(JSON.stringify({ message: "Server error." }), { status: 500 });
   }
 }

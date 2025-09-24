@@ -17,7 +17,8 @@ export async function GET(req) {
       roll: 1,
       class: 1,
       status: 1, 
-      _id: 0,
+      timestamp: 1,
+      _id: 0
     });
 
     return new Response(JSON.stringify(students), { status: 200 });

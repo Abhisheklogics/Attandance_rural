@@ -9,7 +9,7 @@ function page() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
  const router = useRouter();
-  const [student, setStudent] = useState({ name: "", roll: "", class: "" });
+  const [student, setStudent] = useState({ name: "", roll: "", class: ""});
   const [loading, setLoading] = useState(false);
   const [embeddingsArray, setEmbeddingsArray] = useState([]);
 
@@ -140,7 +140,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-6 sm:px-6">
+    <div className=" flex flex-col items-center justify-center px-4 py-6 sm:px-6">
   <Toaster position="top-right" />
 
   <h1 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">
@@ -195,6 +195,7 @@ useEffect(() => {
       required
       className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
     />
+    
     <button
       type="button"
       onClick={capturePhoto}
