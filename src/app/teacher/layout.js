@@ -10,7 +10,7 @@ export default function Layout({ children }) {
     { href: "/teacher/attandance", label: "Take Attendance" },
     { href: "/teacher/show-attandance", label: "Show Attendance" },
     { href: "/teacher/register-face", label: "Face Registration" },
-    { href: "/teacher/feedback", label: "Send Feedback" },
+    
     { href: "/", label: "Home" },
   ];
 
