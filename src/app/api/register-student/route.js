@@ -5,80 +5,36 @@ import ClassTwo from "@/model/class.model2";
 export async function POST(req) {
   try {
     await connectToDb();
+    const { name, roll, className, embeddings, parentNumber } = await req.json();
 
-   
-    const { name, roll, class: className, embeddings } = await req.json();
-    if(className == '1')
-    {
-if (!name || !roll || !className || !embeddings || embeddings.length !== 2) {
-  return new Response(
-    JSON.stringify({ message: "Missing required fields or incorrect embeddings count." }),
-    { status: 400 }
-  );
-}
-
-let student = await ClassOne.findOne({ roll });
-
-if (student) {
-  student.name = name;
-  student.class = className;
-
-  student.embeddings = embeddings;
-  await student.save();
-
-  return new Response(JSON.stringify({ message: "Student updated successfully!" }), { status: 200 });
-}
-
-// create new student
-student = await ClassOne.create({ name, roll, class: className,embeddings });
-
-return new Response(JSON.stringify({ message: "Student registered successfully!" }), { status: 201 });
-
-
-
+    if (!name || !roll || !className || !embeddings || embeddings.length !== 2 || !parentNumber) {
+      return new Response(JSON.stringify({ message: "Missing required fields." }), { status: 400 });
     }
 
-    if(className == '2')
-    {
-if (!name || !roll || !className || !embeddings || embeddings.length !== 2) {
-  return new Response(
-    JSON.stringify({ message: "Missing required fields or incorrect embeddings count." }),
-    { status: 400 }
-  );
-}
+    let Model;
+    if (className === '1') Model = ClassOne;
+    else if (className === '2') Model = ClassTwo;
+    else return new Response(JSON.stringify({ message: "Invalid class." }), { status: 400 });
 
-let student = await ClassTwo.findOne({ roll });
+    let student = await Model.findOne({ roll });
 
-if (student) {
-  student.name = name;
-  student.class = className;
-
-  student.embeddings = embeddings;
-  await student.save();
-
-  return new Response(JSON.stringify({ message: "Student updated successfully!" }), { status: 200 });
-}
-
-// create new student
-student = await ClassTwo.create({ name, roll, class: className,embeddings });
-
-return new Response(JSON.stringify({ message: "Student registered successfully!" }), { status: 201 });
-
-
-
+    if (student) {
+      student.name = name;
+      student.class = className;
+      student.parentNumber = parentNumber;
+      student.embeddings = embeddings;
+      await student.save();
+      return new Response(JSON.stringify({ message: "Student updated successfully!" }), { status: 200 });
     }
 
-  } 
-  catch (err) {
-    console.error(" Registration error:", err);
+    student = await Model.create({ name, roll, class: className, parentNumber, embeddings });
+    return new Response(JSON.stringify({ message: "Student registered successfully!" }), { status: 201 });
 
+  } catch (err) {
+    console.error("Registration error:", err);
     if (err.code === 11000) {
-      return new Response(
-        JSON.stringify({ message: "Roll number already exists." }),
-        { status: 400 }
-      );
+      return new Response(JSON.stringify({ message: "Roll number already exists." }), { status: 400 });
     }
-
     return new Response(JSON.stringify({ message: "Server error." }), { status: 500 });
   }
 }

@@ -3,6 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 import { useRouter } from "next/navigation";
+import {
+  saveAttendanceOffline,
+  getUnsyncedAttendance,
+  markAttendanceSynced,
+  getAllStudentsOffline,
+} from "@/lib/indexedDB";
 
 export default function Attendance({ alldata }) {
   const videoRef = useRef(null);
@@ -16,12 +22,11 @@ export default function Attendance({ alldata }) {
   const [inputSize, setInputSize] = useState(160);
   const router = useRouter();
 
+
   useEffect(() => {
-    function getAdaptiveInput() {
-      return window.innerWidth < 768 ? 160 : 224;
-    }
-    setInputSize(getAdaptiveInput());
+    setInputSize(window.innerWidth < 768 ? 160 : 224);
   }, []);
+
 
   useEffect(() => {
     const load = async () => {
@@ -31,18 +36,30 @@ export default function Attendance({ alldata }) {
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
 
-      const res = await fetch(`/api/students?class=${alldata}`);
-      const data = await res.json();
+      let data = [];
+      try {
+        if (navigator.onLine) {
+          const res = await fetch(`/api/students?class=${alldata}`);
+          data = await res.json();
+        } else {
+          data = await getAllStudentsOffline(alldata);
+        }
+      } catch (err) {
+        console.warn("Offline fallback", err);
+        data = await getAllStudentsOffline(alldata);
+      }
+
       setStudents(data);
 
       const labeled = data.map((stu) => {
         const descriptors = stu.embeddings.map((emb) => new Float32Array(emb));
         return new faceapi.LabeledFaceDescriptors(stu.name, descriptors);
       });
-      setMatcher(new faceapi.FaceMatcher(labeled, 0.5));
 
+      setMatcher(new faceapi.FaceMatcher(labeled, 0.5));
       startVideo(facingMode);
     };
+
     load();
     return () => stopVideo();
   }, [facingMode]);
@@ -62,12 +79,11 @@ export default function Attendance({ alldata }) {
   };
 
   const takeSnapshot = (video) => {
-    const snapshotCanvas = document.createElement("canvas");
-    snapshotCanvas.width = video.videoWidth;
-    snapshotCanvas.height = video.videoHeight;
-    const ctx = snapshotCanvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-    return snapshotCanvas.toDataURL("image/png");
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/png");
   };
 
   const onPlay = async () => {
@@ -104,7 +120,7 @@ export default function Attendance({ alldata }) {
         ctx.lineWidth = 3;
         ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-        const label = matchedStudent ? `${matchedStudent.name} (${matchedStudent.class})` : "Unknown";
+        const label = matchedStudent ? `${matchedStudent.name} (${matchedStudent.className})` : "Unknown";
         ctx.font = "16px Arial";
         ctx.fillStyle = "rgba(0,0,0,0.5)";
         ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
@@ -115,37 +131,7 @@ export default function Attendance({ alldata }) {
       });
 
       setRecognizedList(recognized);
-
-     
-      if (!attendanceMarked && recognized.length && recognized.length === students.length) {
-        setAttendanceMarked(true);
-        const snapshot = takeSnapshot(video);
-        stopVideo();
-        try {
-          await Promise.all(
-            recognized.map((stu) =>
-              fetch("/api/mark", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  name: stu.name,
-                  roll: stu.roll,
-                  className: stu.class,
-                  timestamp: new Date().toISOString(),
-                  snapshot, 
-                }),
-              })
-            )
-          );
-          alert(`Attendance marked for: ${recognized.map((s) => s.name).join(", ")}`);
-          router.push("/teacher/show-attandance");
-        } catch (err) {
-          console.error("Mark attendance failed:", err);
-        }
-        return; 
-      }
-
-      if (!attendanceMarked) requestAnimationFrame(detect);
+      requestAnimationFrame(detect);
     };
 
     requestAnimationFrame(detect);
@@ -154,32 +140,48 @@ export default function Attendance({ alldata }) {
   const markAttendance = async () => {
     if (!recognizedList.length || attendanceMarked) return alert("No students recognized or already marked!");
     setAttendanceMarked(true);
-
-    const snapshot = takeSnapshot(videoRef.current);
     stopVideo();
 
-    try {
-      await Promise.all(
-        recognizedList.map((stu) =>
-          fetch("/api/mark", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: stu.name,
-              roll: stu.roll,
-              className: stu.class,
-              timestamp: new Date().toISOString(),
-              snapshot,
-            }),
-          })
-        )
-      );
-      alert(`Attendance marked for: ${recognizedList.map((s) => s.name).join(", ")}`);
-      router.push("/teacher/show-attandance");
-    } catch (err) {
-      console.error("Mark attendance failed:", err);
+    const snapshot = takeSnapshot(videoRef.current);
+
+ 
+    await saveAttendanceOffline({
+      recognized: recognizedList,
+      timestamp: new Date().toISOString(),
+      snapshot,
+    });
+
+    alert("Attendance saved locally. Will sync when online.");
+
+   
+    if (navigator.onLine) {
+      syncAttendance();
+    }
+
+    router.push("/teacher/show-attandance");
+  };
+
+  const syncAttendance = async () => {
+    const unsynced = await getUnsyncedAttendance();
+    for (let record of unsynced) {
+      try {
+        const res = await fetch("/api/mark", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(record),
+        });
+        if (res.ok) await markAttendanceSynced(record.id);
+      } catch (err) {
+        console.error("Attendance sync failed:", err);
+      }
     }
   };
+
+ 
+  useEffect(() => {
+    window.addEventListener("online", syncAttendance);
+    return () => window.removeEventListener("online", syncAttendance);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-6 px-2">
@@ -223,6 +225,8 @@ export default function Attendance({ alldata }) {
     </div>
   );
 }
+
+
 
 
 

@@ -6,11 +6,16 @@ export async function GET() {
     await connectToDb();
 
     
-    const classes = await Attendance.distinct("class");
+    let classes = [];
+    if (await Attendance.countDocuments() > 0) {
+      classes = await Attendance.distinct("class");
+    }
 
     return new Response(JSON.stringify(classes), { status: 200 });
   } catch (err) {
     console.error("Error fetching classes:", err);
-    return new Response(JSON.stringify({ message: "Server error" }), { status: 500 });
+
+    
+    return new Response(JSON.stringify([]), { status: 200 });
   }
 }
