@@ -5,21 +5,25 @@ export async function POST(req) {
   try {
     await connectToDb();
 
-    const { name, roll, className, timestamp } = await req.json();
+    const { students, timestamp} = await req.json();
 
-    if (!name || !roll || !className || !timestamp) {
+    if (!students || !students.length) {
       return new Response(
-        JSON.stringify({ message: "Missing required fields." }),
+        JSON.stringify({ message: "No students provided." }),
         { status: 400 }
       );
     }
 
-    const newEntry = await Attendance.create({
-      name,
-      roll,
-      class: className,
-      timestamp: new Date(timestamp), // save as Date object
-    });
+    // Saare students ko ek hi baar insert karenge
+    const entries = students.map((stu) => ({
+      name: stu.name,
+      roll: stu.roll,
+      class: stu.className,
+      timestamp: new Date(timestamp),
+      
+    }));
+
+    await Attendance.insertMany(entries);
 
     return new Response(
       JSON.stringify({ message: "Attendance marked successfully!" }),
@@ -27,6 +31,9 @@ export async function POST(req) {
     );
   } catch (err) {
     console.error("Error marking attendance:", err);
-    return new Response(JSON.stringify({ message: "Server error." }), { status: 500 });
+    return new Response(
+      JSON.stringify({ message: "Server error." }),
+      { status: 500 }
+    );
   }
 }

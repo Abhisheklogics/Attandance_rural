@@ -98,10 +98,10 @@ function AttendanceList() {
         >
           <option value="">Select Class</option>
           {classes.map((cls, idx) => (
-            <option key={idx} value={cls}>
-              Class {cls}
-            </option>
-          ))}
+    <option key={idx} value={cls}>
+      Class {cls}
+    </option>
+  ))}
         </select>
 
         {selectedClass && attendanceData.length > 0 && (

@@ -3,12 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
 import { useRouter } from "next/navigation";
-import {
-  saveAttendanceOffline,
-  getUnsyncedAttendance,
-  markAttendanceSynced,
-  getAllStudentsOffline,
-} from "@/lib/indexedDB";
 
 export default function Attendance({ alldata }) {
   const videoRef = useRef(null);
@@ -22,11 +16,12 @@ export default function Attendance({ alldata }) {
   const [inputSize, setInputSize] = useState(160);
   const router = useRouter();
 
-
   useEffect(() => {
-    setInputSize(window.innerWidth < 768 ? 160 : 224);
+    function getAdaptiveInput() {
+      return window.innerWidth < 768 ? 160 : 224;
+    }
+    setInputSize(getAdaptiveInput());
   }, []);
-
 
   useEffect(() => {
     const load = async () => {
@@ -36,30 +31,18 @@ export default function Attendance({ alldata }) {
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
 
-      let data = [];
-      try {
-        if (navigator.onLine) {
-          const res = await fetch(`/api/students?class=${alldata}`);
-          data = await res.json();
-        } else {
-          data = await getAllStudentsOffline(alldata);
-        }
-      } catch (err) {
-        console.warn("Offline fallback", err);
-        data = await getAllStudentsOffline(alldata);
-      }
-
+      const res = await fetch(`/api/students?class=${alldata}`);
+      const data = await res.json();
       setStudents(data);
 
       const labeled = data.map((stu) => {
         const descriptors = stu.embeddings.map((emb) => new Float32Array(emb));
         return new faceapi.LabeledFaceDescriptors(stu.name, descriptors);
       });
-
       setMatcher(new faceapi.FaceMatcher(labeled, 0.5));
+
       startVideo(facingMode);
     };
-
     load();
     return () => stopVideo();
   }, [facingMode]);
@@ -79,109 +62,95 @@ export default function Attendance({ alldata }) {
   };
 
   const takeSnapshot = (video) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/png");
+    const snapshotCanvas = document.createElement("canvas");
+    snapshotCanvas.width = video.videoWidth;
+    snapshotCanvas.height = video.videoHeight;
+    const ctx = snapshotCanvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+    return snapshotCanvas.toDataURL("image/png");
   };
 
-  const onPlay = async () => {
-    if (!videoRef.current || !matcher || detecting) return;
-    setDetecting(true);
+ const onPlay = async () => {
+  if (!videoRef.current || !matcher || detecting) return;
+  setDetecting(true);
 
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const displaySize = { width: video.videoWidth, height: video.videoHeight };
-    faceapi.matchDimensions(canvas, displaySize);
+  const video = videoRef.current;
+  const canvas = canvasRef.current;
+  const displaySize = { width: video.videoWidth, height: video.videoHeight };
+  faceapi.matchDimensions(canvas, displaySize);
 
-    const detect = async () => {
-      if (video.paused || video.ended) {
-        setDetecting(false);
-        return;
-      }
+  const detect = async () => {
+    if (video.paused || video.ended) {
+      setDetecting(false);
+      return;
+    }
 
-      const detections = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.5 }))
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+    const detections = await faceapi
+      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.5 }))
+      .withFaceLandmarks()
+      .withFaceDescriptors();
 
-      const resized = faceapi.resizeResults(detections, displaySize);
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const resized = faceapi.resizeResults(detections, displaySize);
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const recognized = [];
-      resized.forEach((det) => {
-        const best = matcher.findBestMatch(det.descriptor);
-        const matchedStudent = students.find((s) => s.name === best.label);
-        const box = det.detection.box;
+    const recognized = [];
+    resized.forEach((det) => {
+      const best = matcher.findBestMatch(det.descriptor);
+      const matchedStudent = students.find((s) => s.name === best.label);
+      const box = det.detection.box;
 
-        ctx.strokeStyle = matchedStudent ? "#12439eff" : "#ef4444";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
+      ctx.strokeStyle = matchedStudent ? "#12439eff" : "#ef4444";
+      ctx.lineWidth = 3;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-        const label = matchedStudent ? `${matchedStudent.name} (${matchedStudent.className})` : "Unknown";
-        ctx.font = "16px Arial";
-        ctx.fillStyle = "rgba(0,0,0,0.5)";
-        ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
-        ctx.fillStyle = "#fff";
-        ctx.fillText(label, box.x + 5, box.y - 8);
+      const label = matchedStudent ? `${matchedStudent.name} (${matchedStudent.class})` : "Unknown";
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "rgba(0,0,0,0.5)";
+      ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(label, box.x + 5, box.y - 8);
 
-        if (matchedStudent) recognized.push(matchedStudent);
-      });
-
-      setRecognizedList(recognized);
-      requestAnimationFrame(detect);
-    };
-
-    requestAnimationFrame(detect);
-  };
-
-  const markAttendance = async () => {
-    if (!recognizedList.length || attendanceMarked) return alert("No students recognized or already marked!");
-    setAttendanceMarked(true);
-    stopVideo();
-
-    const snapshot = takeSnapshot(videoRef.current);
-
- 
-    await saveAttendanceOffline({
-      recognized: recognizedList,
-      timestamp: new Date().toISOString(),
-      snapshot,
+      if (matchedStudent) recognized.push(matchedStudent);
     });
 
-    alert("Attendance saved locally. Will sync when online.");
+    setRecognizedList(recognized);
 
-   
-    if (navigator.onLine) {
-      syncAttendance();
-    }
+    // ✅ Mark attendance instantly for detected faces
+    if (!attendanceMarked && recognized.length > 0) {
+      setAttendanceMarked(true);
 
-    router.push("/teacher/show-attandance");
-  };
+      const snapshot = takeSnapshot(video);
+      stopVideo(); // ✅ Stop video immediately
 
-  const syncAttendance = async () => {
-    const unsynced = await getUnsyncedAttendance();
-    for (let record of unsynced) {
       try {
-        const res = await fetch("/api/mark", {
+        await fetch("/api/mark", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(record),
+          body: JSON.stringify({
+            students: recognized.map((stu) => ({
+              name: stu.name,
+              roll: stu.roll,
+              className: stu.class,
+            })),
+            timestamp: new Date().toISOString(),
+          }),
         });
-        if (res.ok) await markAttendanceSynced(record.id);
+
+        alert(`Attendance marked for: ${recognized.map((s) => s.name).join(", ")}`);
+        router.push("/teacher/show-attandance");
       } catch (err) {
-        console.error("Attendance sync failed:", err);
+        console.error("Mark attendance failed:", err);
       }
+
+      return; // ✅ Stop further detection
     }
+
+    if (!attendanceMarked) requestAnimationFrame(detect);
   };
 
- 
-  useEffect(() => {
-    window.addEventListener("online", syncAttendance);
-    return () => window.removeEventListener("online", syncAttendance);
-  }, []);
+  requestAnimationFrame(detect);
+};
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-6 px-2">
@@ -201,22 +170,6 @@ export default function Attendance({ alldata }) {
         <canvas ref={canvasRef} width={640} height={480} className="absolute top-0 left-0 w-full h-full" />
       </div>
 
-      <div className="flex flex-wrap justify-center gap-4 mt-4">
-        <button
-          onClick={() => setFacingMode((prev) => (prev === "user" ? "environment" : "user"))}
-          className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition shadow-lg"
-        >
-          Switch Camera
-        </button>
-        <button
-          onClick={markAttendance}
-          disabled={!recognizedList.length || attendanceMarked}
-          className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 transition shadow-lg"
-        >
-          Mark Attendance
-        </button>
-      </div>
-
       <div className="mt-4 text-center text-gray-400 text-sm sm:text-base">
         {recognizedList.length
           ? `Recognized: ${recognizedList.map((s) => s.name).join(", ")}`
@@ -225,8 +178,6 @@ export default function Attendance({ alldata }) {
     </div>
   );
 }
-
-
 
 
 
