@@ -1,16 +1,12 @@
-// utils/offlineStore.js
-import localforage from "localforage";
+'use client';
 
-localforage.config({ name: "FaceApp" });
+export async function checkOnlineStatus() {
+  if (!window.navigator.onLine) return false;
 
-export const savePendingRegistration = async (payload) => {
-  const pending = (await localforage.getItem("pendingRegs")) || [];
-  pending.push(payload);
-  await localforage.setItem("pendingRegs", pending);
-};
-
-export const getPendingRegistrations = () => localforage.getItem("pendingRegs");
-
-export const clearPendingRegistrations = async () => {
-  await localforage.setItem("pendingRegs", []);
-};
+  try {
+    const res = await fetch("/api/ping", { cache: "no-store" });
+    return res.ok; // true if server reachable
+  } catch {
+    return false;
+  }
+}

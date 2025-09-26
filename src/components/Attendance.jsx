@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
+
+import {getAllStudentsOffline ,saveAttendanceOffline} from  '@/lib/indexedDB'
+
 import { useRouter } from "next/navigation";
 
-export default function Attendance({ alldata }) {
+export default  function Attendance({ alldata }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [students, setStudents] = useState([]);
@@ -15,7 +18,7 @@ export default function Attendance({ alldata }) {
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [inputSize, setInputSize] = useState(160);
   const router = useRouter();
-
+let data;
   useEffect(() => {
     function getAdaptiveInput() {
       return window.innerWidth < 768 ? 160 : 224;
@@ -30,10 +33,16 @@ export default function Attendance({ alldata }) {
         faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
+if (navigator.onLine) {
+  const res = await fetch(`/api/students?class=${alldata}`);
+   data = await res.json();
+  setStudents(data);
+} else {
+ data = await getAllStudentsOffline(alldata); 
+  console.log('Locally fetched successfully');
+  setStudents(data);
+}
 
-      const res = await fetch(`/api/students?class=${alldata}`);
-      const data = await res.json();
-      setStudents(data);
 
       const labeled = data.map((stu) => {
         const descriptors = stu.embeddings.map((emb) => new Float32Array(emb));
@@ -116,15 +125,17 @@ export default function Attendance({ alldata }) {
 
     setRecognizedList(recognized);
 
-    // ✅ Mark attendance instantly for detected faces
+    
     if (!attendanceMarked && recognized.length > 0) {
       setAttendanceMarked(true);
 
       const snapshot = takeSnapshot(video);
-      stopVideo(); // ✅ Stop video immediately
+      stopVideo();
 
       try {
-        await fetch("/api/mark", {
+      if (navigator.onLine) {
+       
+  await fetch("/api/mark", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -139,11 +150,24 @@ export default function Attendance({ alldata }) {
 
         alert(`Attendance marked for: ${recognized.map((s) => s.name).join(", ")}`);
         router.push("/teacher/show-attandance");
+        }else{
+          await saveAttendanceOffline({
+             students: recognized.map((stu) => ({
+      name: stu.name,
+      roll: stu.roll,
+      className: stu.class,
+    })),
+    timestamp: new Date().toISOString(),
+          })
+           alert("Offline attendance saved. Will sync when online ✅");
+           router.push("/teacher/show-attandance");
+        }
+      
       } catch (err) {
         console.error("Mark attendance failed:", err);
       }
 
-      return; // ✅ Stop further detection
+      return; 
     }
 
     if (!attendanceMarked) requestAnimationFrame(detect);
