@@ -6,10 +6,13 @@ export default function LangSwitcher() {
   const router = useRouter();
   const [lang, setLang] = useState("en");
 
-  useEffect(() => {
+ useEffect(() => {
+  if (typeof window !== "undefined") {
     const savedLang = localStorage.getItem("preferredLang") || "en";
     setLang(savedLang);
-  }, []);
+  }
+}, []);
+
 
   const changeLang = (e) => {
     const newLang = e.target.value;

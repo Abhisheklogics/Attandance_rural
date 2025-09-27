@@ -16,7 +16,7 @@ export default function Home() {
   const [t, setT] = useState(en);
 
   useEffect(() => {
-    // get saved lang from localStorage or default to en
+  
     const savedLang = localStorage.getItem("preferredLang") || "en";
     setLang(savedLang);
     setT(translations[savedLang]);
