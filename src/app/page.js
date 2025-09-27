@@ -38,7 +38,7 @@ export default function Home() {
 
       {/* Subheading */}
       <p className="text-gray-200 max-w-2xl text-center mb-16 text-lg sm:text-xl animate-fade-in delay-200">
-        {t.subtitle || "A simple, reliable, and futuristic face-recognition attendance system, designed to empower teachers and students in rural areas."}
+        {t?.subtitle || "A simple, reliable, and futuristic face-recognition attendance system, designed to empower teachers and students in rural areas."}
       </p>
 
       {/* Action Cards */}
@@ -50,9 +50,9 @@ export default function Home() {
         >
           <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
-            {t.registerTitle || "Register Students"}
+            {t?.registerTitle || "Register Students"}
           </h2>
-          <p className="text-gray-100 text-sm sm:text-base">{t.registerDesc || "Capture student facial data easily and securely."}</p>
+          <p className="text-gray-100 text-sm sm:text-base">{t?.registerDesc || "Capture student facial data easily and securely."}</p>
         </Link>
 
         {/* Take Attendance */}
@@ -62,24 +62,24 @@ export default function Home() {
         >
           <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
-            {t.attendanceTitle || "Mark Attendance"}
+            {t?.attendanceTitle || "Mark Attendance"}
           </h2>
-          <p className="text-gray-100 text-sm sm:text-base">{t.attendanceDesc || "Quickly mark attendance with face recognition."}</p>
+          <p className="text-gray-100 text-sm sm:text-base">{t?.attendanceDesc || "Quickly mark attendance with face recognition."}</p>
         </Link>
 
         {/* Info Card */}
         <div className="group relative bg-gradient-to-br from-orange-400 to-orange-500 rounded-3xl p-8 text-center shadow-2xl transform transition-all duration-500 hover:scale-105 hover:shadow-orange-500/40 hover:-translate-y-2">
           <div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <h2 className="text-2xl sm:text-3xl font-bold mb-3 group-hover:text-white transition">
-            {t.aboutTitle || "About System"}
+            {t?.aboutTitle || "About System"}
           </h2>
-          <p className="text-gray-100 text-sm sm:text-base">{t.aboutDesc || "Learn how this system helps rural schools improve attendance and reduce paperwork."}</p>
+          <p className="text-gray-100 text-sm sm:text-base">{t?.aboutDesc || "Learn how this system helps rural schools improve attendance and reduce paperwork."}</p>
         </div>
       </div>
 
       {/* Footer */}
       <footer className="mt-20 text-sm sm:text-base text-gray-300 text-center animate-fade-in delay-500">
-        {t.footer || "© 2025 Abhishek Kumar Production"}
+        {t?.footer || "© 2025 Abhishek Kumar Production"}
       </footer>
     </main>
   );
