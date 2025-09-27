@@ -30,7 +30,8 @@ export default function LangSwitcher() {
       <option value="en">English</option>
       <option value="hi">हिंदी</option>
       <option value="pa">ਪੰਜਾਬੀ</option>
-
+      <option value="ur">اردو</option>
+      <option value="ta">தமிழ்</option>
     </select>
   );
 }
