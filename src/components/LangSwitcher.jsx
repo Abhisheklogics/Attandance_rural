@@ -27,10 +27,9 @@ export default function LangSwitcher() {
       value={lang}
       className="mb-6 px-3 py-2 rounded bg-gray-800 text-white"
     >
-     
+      <option value="en">English</option>
       <option value="hi">हिंदी</option>
       <option value="pa">ਪੰਜਾਬੀ</option>
-       <option value="en">English</option>
 
     </select>
   );
