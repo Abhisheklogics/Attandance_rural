@@ -1,0 +1,9 @@
+{
+  "title": "Student Face Registration",
+  "name": "Name",
+  "roll": "Roll Number",
+  "parentNumber": "Parent Number",
+  "className": "Class (e.g., 10th A)",
+  "captureButton": "Capture Photo",
+  "capturing": "Capturing..."
+}

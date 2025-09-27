@@ -69,6 +69,10 @@ const nextConfig = {
       },
     },
   },
+  i18n: {
+    locales: ["en", "hi", "pa", "ur", "ta"], 
+    defaultLocale: "en",
+  },
 };
 
 export default withPWA(nextConfig);
