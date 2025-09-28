@@ -150,7 +150,7 @@ const takeSnapshot = (video) => {
       ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-      const label = matchedStudent ? `${matchedStudent.name} class(${matchedStudent.class? matchedStudent.class:matchedStudent.className})` : "Unknown";
+      const label = matchedStudent ? `Name:${matchedStudent.name} -> class(${matchedStudent.class? matchedStudent.class:matchedStudent.className})` : "Unknown";
       ctx.font = "16px Arial";
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
