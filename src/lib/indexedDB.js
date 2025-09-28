@@ -54,13 +54,20 @@ export async function getAllStudentsOffline(className = null) {
 
 export async function saveAttendanceOffline(attendance) {
   const db = await initDB();
-  await db.add("attendance", { ...attendance, synced: false, createdAt: Date.now() });
+  // ensure there’s a unique id if not autoIncrement
+  const id = attendance.id || crypto.randomUUID();
+  await db.put("attendance", {
+    ...attendance,
+    id,            // store id explicitly
+    synced: false,
+    createdAt: Date.now()
+  });
 }
 
 export async function getUnsyncedAttendance() {
   const db = await initDB();
   const all = await db.getAll("attendance");
-  return all.filter((a) => !a.synced);
+  return all.filter(a => !a.synced);
 }
 
 export async function markAttendanceSynced(id) {
@@ -68,6 +75,7 @@ export async function markAttendanceSynced(id) {
   const record = await db.get("attendance", id);
   if (record) {
     record.synced = true;
-    await db.put("attendance", record);
+    await db.put("attendance", record); // or db.put("attendance", record, id);
   }
 }
+

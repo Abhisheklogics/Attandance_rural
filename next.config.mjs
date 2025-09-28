@@ -16,6 +16,9 @@ const withPWA = nextPWA({
         { url: 'public/models/age_gender_model-weights_manifest.json', revision: null },
         { url: 'public/models/face_expression_model-shard1', revision: null },
            { url: 'public/models/face_expression_model-weights_manifest.json', revision: null },
+            { url: 'app/admin', revision: null },
+           { url: 'app/studentFace', revision: null },
+           { url: 'app/studentFace', revision: null },
   ],
   runtimeCaching: [
     {

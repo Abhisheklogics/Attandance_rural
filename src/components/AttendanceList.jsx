@@ -11,7 +11,7 @@ function AttendanceList() {
   const [selectedClass, setSelectedClass] = useState("");
   const [classes, setClasses] = useState([]);
 
-  
+ 
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -21,7 +21,6 @@ function AttendanceList() {
           const data = await res.json();
           setClasses(data);
         } else {
-         
           const offlineStudents = await getAllStudentsOffline();
           const distinctClasses = [...new Set(offlineStudents.map(s => s.className))];
           setClasses(distinctClasses);
@@ -36,23 +35,39 @@ function AttendanceList() {
     fetchClasses();
   }, []);
 
-  
+  // Fetch attendance & merge offline/online data
   const fetchAttendance = async (className) => {
     setLoading(true);
     try {
+      let studentsList = [];
+      let attendanceRecords = [];
+
       if (navigator.onLine) {
-        const res = await fetch(`/api/showAll-Attandance?class=${className}`);
-        if (!res.ok) throw new Error("Failed to fetch attendance online");
-        const data = await res.json();
-        setAttendanceData(data);
+        const studentsRes = await fetch(`/api/students?class=${className}`);
+        studentsList = await studentsRes.json();
+
+        const attRes = await fetch(`/api/showAll-Attandance?class=${className}`);
+        attendanceRecords = await attRes.json();
       } else {
-        const offlineData = await getAllStudentsOffline(className);
-        setAttendanceData(offlineData);
+       
+        studentsList = await getAllStudentsOffline(className);
+       
+        attendanceRecords = await getAllStudentsOffline(className, true); // pass a flag to get only attendance
       }
+
+      // Merge all students with attendance
+      const mergedData = studentsList.map((stu) => {
+        const att = attendanceRecords.find((a) => a.roll === stu.roll);
+        return {
+          ...stu,
+          timestamp: att?.timestamp || null,
+          status: att ? "Present" : "Not Present",
+        };
+      });
+
+      setAttendanceData(mergedData);
     } catch (err) {
       console.warn("Offline fallback for attendance:", err);
-      const offlineData = await getAllStudentsOffline(className);
-      setAttendanceData(offlineData);
     } finally {
       setLoading(false);
     }
@@ -64,21 +79,20 @@ function AttendanceList() {
     if (className) fetchAttendance(className);
   };
 
-
   const exportToExcel = () => {
     if (!attendanceData.length) return;
-  const worksheet = XLSX.utils.json_to_sheet(
-  attendanceData.map((student) => ({
-    Name: student.name,
-    Class: student.className || student.class,
-    "Roll Number": student.roll,
-    Status: student.name ? "Present" : "Not Present",
-    Time: student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A",
-    Gender: student.gender,
-    Category: student.category,
-    "School Name": student.schoolName
-  }))
-);
+    const worksheet = XLSX.utils.json_to_sheet(
+      attendanceData.map((student) => ({
+        Name: student.name,
+        Gender: student.gender,
+        "School Name": student.schoolName,
+        Class: student.className || student.class,
+        "Roll Number": student.roll,
+        Status: student.status,
+        Time: student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A",
+        Category: student.category
+      }))
+    );
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
@@ -89,9 +103,8 @@ function AttendanceList() {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black p-4 sm:p-6 text-gray-100 flex flex-col items-center">
-
       <h1 className="text-3xl sm:text-5xl font-extrabold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-lg animate-fade-in">
-        Attendance Records
+        Attendance Records 
       </h1>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full max-w-lg">
@@ -102,10 +115,10 @@ function AttendanceList() {
         >
           <option value="">Select Class</option>
           {classes.map((cls, idx) => (
-    <option key={idx} value={cls}>
-      Class {cls}
-    </option>
-  ))}
+            <option key={idx} value={cls}>
+              Class {cls}
+            </option>
+          ))}
         </select>
 
         {selectedClass && attendanceData.length > 0 && (
@@ -126,16 +139,13 @@ function AttendanceList() {
             <thead className="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700">
               <tr>
                 <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Name</th>
-                    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Gender</th>
-                        <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">School Name</th>
-    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Class</th>
-    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Roll No</th>
-
-
-
-    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Time</th>
-        <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Category</th>
-    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Status</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Gender</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">School Name</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Class</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Roll No</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Time</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Category</th>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -147,9 +157,9 @@ function AttendanceList() {
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.className || student.class}</td>
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.roll}</td>
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A"}</td>
-                    <td className="py-3 px-4 sm:py-4 sm:px-6">{student.category}</td>
-                  <td className={`py-3 px-4 sm:py-4 sm:px-6 font-semibold ${student.name ? "text-green-400" : "text-red-400"}`}>
-                    {student.name ? "Present" : "Not Present"}
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.category}</td>
+                  <td className={`py-3 px-4 sm:py-4 sm:px-6 font-semibold ${student.status === "Present" ? "text-green-400" : "text-red-400"}`}>
+                    {student.status}
                   </td>
                 </tr>
               ))}
@@ -169,7 +179,6 @@ function AttendanceList() {
           Please select a class to view attendance.
         </p>
       )}
-
     </div>
   );
 }

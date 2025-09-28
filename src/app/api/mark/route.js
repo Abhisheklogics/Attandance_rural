@@ -5,7 +5,7 @@ export async function POST(req) {
   try {
     await connectToDb();
 
-    const { students, timestamp} = await req.json();
+    const { students, timestamp } = await req.json();
 
     if (!students || !students.length) {
       return new Response(
@@ -19,8 +19,7 @@ export async function POST(req) {
       name: stu.name,
       roll: stu.roll,
       class: stu.className,
-      timestamp: new Date(timestamp),
-      
+      timestamp: new Date(timestamp), // <-- yahan timestamp aa raha hai
     }));
 
     await Attendance.insertMany(entries);
