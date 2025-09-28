@@ -248,7 +248,7 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
   value={student.gender}
   onChange={(e) => setStudent({ ...student, gender: e.target.value })}
   required
-  className="border border-gray-300 rounded-lg px-4 py-2"
+  className="border border-gray-300 bg-black text-white rounded-lg px-4 py-2"
 >
   <option value="">Select Gender</option>
   <option value="Male">Male</option>
