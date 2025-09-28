@@ -11,7 +11,7 @@ function Page() {
   const canvasRef = useRef(null);
   const router = useRouter();
 
-const [student, setStudent] = useState({ name: "", roll: "", className: "", parentNumber: "" });
+const [student, setStudent] = useState({ name: "", roll: "", className: "", parentNumber: "",category:"",gender:"", schoolName:""});
 
 
   const [classes, setClasses] = useState([]);
@@ -234,6 +234,35 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
   onChange={(e) => setStudent({ ...student, className: e.target.value })}
   required
   className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
+/>
+<input
+  type="text"
+  placeholder="Category (General/OBC/SC/ST)"
+  value={student.category}
+  onChange={(e) => setStudent({ ...student, category: e.target.value })}
+  required
+  className="border border-gray-300 rounded-lg px-4 py-2"
+/>
+
+<select
+  value={student.gender}
+  onChange={(e) => setStudent({ ...student, gender: e.target.value })}
+  required
+  className="border border-gray-300 rounded-lg px-4 py-2"
+>
+  <option value="">Select Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+  <option value="Other">Other</option>
+</select>
+
+<input
+  type="text"
+  placeholder="School Name"
+  value={student.schoolName}
+  onChange={(e) => setStudent({ ...student, schoolName: e.target.value })}
+  required
+  className="border border-gray-300 rounded-lg px-4 py-2"
 />
 
 

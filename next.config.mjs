@@ -1,20 +1,32 @@
 import nextPWA from "next-pwa";
 
 const withPWA = nextPWA({
-  dest: "public",
+  dest: 'public',
   register: true,
   skipWaiting: true,
+  additionalManifestEntries: [
+    // sabhi model files exact file names ke saath
+    { url: '/models/face_recognition_model-shard1', revision: null },
+    { url: '/models/face_recognition_model-weights_manifest.json', revision: null },
+    { url: '/models/face_landmark_68_model-shard1', revision: null },
+    { url: '/models/face_landmark_68_model-weights_manifest.json', revision: null },
+    { url: '/models/tiny_face_detector_model-shard1', revision: null },
+    { url: '/models/tiny_face_detector_model-weights_manifest.json', revision: null },
+      { url: 'models/age_gender_model-shard1', revision: null },
+        { url: 'public/models/age_gender_model-weights_manifest.json', revision: null },
+        { url: 'public/models/face_expression_model-shard1', revision: null },
+           { url: 'public/models/face_expression_model-weights_manifest.json', revision: null },
+  ],
   runtimeCaching: [
     {
-      // 🔹 Sabhi Next.js pages ko cache karega
-      urlPattern: /^\/.*$/,
-      handler: "NetworkFirst",
+      urlPattern: /^\/.*$/i,
+      handler: 'NetworkFirst',
       options: {
-        cacheName: "pages",
-        networkTimeoutSeconds: 10, // agar 10 sec me response na aaye to cache se serve kare
+        cacheName: 'pages',
+        networkTimeoutSeconds: 10,
         expiration: {
           maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+          maxAgeSeconds: 60 * 60 * 24 * 30,
         },
         cacheableResponse: {
           statuses: [0, 200],
@@ -22,26 +34,10 @@ const withPWA = nextPWA({
       },
     },
     {
-      // 🔹 Models cache karega (face-api etc.)
-      urlPattern: /^\/models\/.*$/,
-      handler: "CacheFirst",
+      urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|gif|webp|ico)$/i,
+      handler: 'CacheFirst',
       options: {
-        cacheName: "face-api-models",
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-        },
-        cacheableResponse: {
-          statuses: [0, 200],
-        },
-      },
-    },
-    {
-      // 🔹 External images cache karega
-      urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|gif|webp|ico)$/,
-      handler: "CacheFirst",
-      options: {
-        cacheName: "images",
+        cacheName: 'images',
         expiration: {
           maxEntries: 100,
           maxAgeSeconds: 60 * 60 * 24 * 30,
@@ -53,6 +49,7 @@ const withPWA = nextPWA({
     },
   ],
 });
+
 
 const nextConfig = {
   reactStrictMode: true,

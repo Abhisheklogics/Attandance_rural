@@ -3,32 +3,15 @@
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { getAllStudentsOffline } from '@/lib/indexedDB';
-import { Pie, Bar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-} from "chart.js";
-import LangSwitcher from "@/components/LangSwitcher"; // Language dropdown
-import translations from "../app/locales/translations"; // All languages
-import { useRouter } from "next/navigation";
-
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+import { getAllStudentsOffline } from "@/lib/indexedDB"; 
 
 function AttendanceList() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
   const [classes, setClasses] = useState([]);
-  const [weeklyTrend, setWeeklyTrend] = useState([]);
-const [locale, setLocale] = useState("en");
-const t = translations[locale];
 
+  
   useEffect(() => {
     const fetchClasses = async () => {
       try {
@@ -38,11 +21,13 @@ const t = translations[locale];
           const data = await res.json();
           setClasses(data);
         } else {
+         
           const offlineStudents = await getAllStudentsOffline();
           const distinctClasses = [...new Set(offlineStudents.map(s => s.className))];
           setClasses(distinctClasses);
         }
-      } catch {
+      } catch (err) {
+        console.warn("Offline fallback for classes:", err);
         const offlineStudents = await getAllStudentsOffline();
         const distinctClasses = [...new Set(offlineStudents.map(s => s.className))];
         setClasses(distinctClasses);
@@ -51,44 +36,26 @@ const t = translations[locale];
     fetchClasses();
   }, []);
 
+  
   const fetchAttendance = async (className) => {
     setLoading(true);
     try {
-      let data = [];
       if (navigator.onLine) {
         const res = await fetch(`/api/showAll-Attandance?class=${className}`);
         if (!res.ok) throw new Error("Failed to fetch attendance online");
-        data = await res.json();
+        const data = await res.json();
+        setAttendanceData(data);
       } else {
-        data = await getAllStudentsOffline(className);
+        const offlineData = await getAllStudentsOffline(className);
+        setAttendanceData(offlineData);
       }
-      setAttendanceData(data);
-      prepareWeeklyTrend(data);
-    } catch {
-      const data = await getAllStudentsOffline(className);
-      setAttendanceData(data);
-      prepareWeeklyTrend(data);
+    } catch (err) {
+      console.warn("Offline fallback for attendance:", err);
+      const offlineData = await getAllStudentsOffline(className);
+      setAttendanceData(offlineData);
     } finally {
       setLoading(false);
     }
-  };
-
-  const prepareWeeklyTrend = (data) => {
-    const today = new Date();
-    const trend = [];
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(today);
-      day.setDate(today.getDate() - i);
-      const dateStr = day.toISOString().split("T")[0];
-      const dayRecords = data.filter(
-        (s) => s.timestamp && new Date(s.timestamp).toISOString().split("T")[0] === dateStr
-      );
-      const presentCount = dayRecords.filter(s => s.name).length;
-      const totalCount = dayRecords.length || 0;
-      const percentage = totalCount ? Math.round((presentCount / totalCount) * 100) : 0;
-      trend.push({ date: dateStr, present: percentage });
-    }
-    setWeeklyTrend(trend);
   };
 
   const handleClassChange = (e) => {
@@ -97,60 +64,34 @@ const t = translations[locale];
     if (className) fetchAttendance(className);
   };
 
+
   const exportToExcel = () => {
     if (!attendanceData.length) return;
-    const worksheet = XLSX.utils.json_to_sheet(
-      attendanceData.map((student) => ({
-        [t.name]: student.name,
-        [t.class]: student.className || student.class,
-        [t.roll]: student.roll,
-        [t.status]: student.name ? t.present : t.absent,
-        [t.time]: student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A",
-      }))
-    );
+  const worksheet = XLSX.utils.json_to_sheet(
+  attendanceData.map((student) => ({
+    Name: student.name,
+    Class: student.className || student.class,
+    "Roll Number": student.roll,
+    Status: student.name ? "Present" : "Not Present",
+    Time: student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A",
+    Gender: student.gender,
+    Category: student.category,
+    "School Name": student.schoolName
+  }))
+);
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, t.attendanceSheet);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, `Attendance_${selectedClass}.xlsx`);
-  };
-
-  const AttendancePieChart = () => {
-    if (!attendanceData.length) return null;
-    const present = attendanceData.filter(s => s.name).length;
-    const absent = attendanceData.length - present;
-    const data = {
-      labels: [t.present, t.absent],
-      datasets: [{ data: [present, absent], backgroundColor: ["#22c55e", "#ef4444"] }],
-    };
-    return (
-      <div className="w-full max-w-md mt-6">
-        <h2 className="text-xl font-semibold mb-2 text-center">{t.attendanceSummary}</h2>
-        <Pie data={data} />
-      </div>
-    );
-  };
-
-  const AttendanceBarChart = () => {
-    if (!weeklyTrend.length) return null;
-    const data = {
-      labels: weeklyTrend.map(d => d.date),
-      datasets: [{ label: t.attendancePercent, data: weeklyTrend.map(d => d.present), backgroundColor: "#3b82f6" }],
-    };
-    return (
-      <div className="w-full max-w-3xl mt-6">
-        <h2 className="text-xl font-semibold mb-2 text-center">{t.weeklyTrend}</h2>
-        <Bar data={data} options={{ responsive: true, scales: { y: { min: 0, max: 100 } } }} />
-      </div>
-    );
+    saveAs(data, `Attendance_Class_${selectedClass}.xlsx`);
   };
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black p-4 sm:p-6 text-gray-100 flex flex-col items-center">
-      <LangSwitcher onChangeLang={setLocale} selected={locale} />
 
-      <h1 className="text-3xl sm:text-5xl font-extrabold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400">
-        {t.attendanceRecords}
+      <h1 className="text-3xl sm:text-5xl font-extrabold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 drop-shadow-lg animate-fade-in">
+        Attendance Records
       </h1>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full max-w-lg">
@@ -159,26 +100,76 @@ const t = translations[locale];
           value={selectedClass}
           onChange={handleClassChange}
         >
-          <option value="">{t.selectClass}</option>
-          {classes.map((cls, idx) => <option key={idx} value={cls}>{cls}</option>)}
+          <option value="">Select Class</option>
+          {classes.map((cls, idx) => (
+    <option key={idx} value={cls}>
+      Class {cls}
+    </option>
+  ))}
         </select>
 
         {selectedClass && attendanceData.length > 0 && (
-          <button onClick={exportToExcel} className="w-full sm:w-auto px-5 py-2 sm:px-6 sm:py-3 bg-green-500 rounded-xl hover:bg-green-600 transition text-black font-semibold text-sm sm:text-base">
-            {t.exportExcel}
+          <button
+            onClick={exportToExcel}
+            className="w-full sm:w-auto px-5 py-2 sm:px-6 sm:py-3 bg-green-500 rounded-xl hover:bg-green-600 transition text-black font-semibold text-sm sm:text-base"
+          >
+            Export to Excel
           </button>
         )}
       </div>
 
-      {loading && <p className="text-lg text-gray-400 animate-pulse">{t.loading}</p>}
+      {loading && <p className="text-lg text-gray-400 animate-pulse">Loading attendance...</p>}
 
       {!loading && selectedClass && attendanceData.length > 0 && (
-        <>
-          <AttendancePieChart />
-          <AttendanceBarChart />
-          {/* Table omitted for brevity, add similar i18n labels */}
-        </>
+        <div className="w-full overflow-x-auto rounded-2xl shadow-2xl border border-gray-700">
+          <table className="w-full text-xs sm:text-sm md:text-base divide-y divide-gray-700">
+            <thead className="bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-700">
+              <tr>
+                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Name</th>
+                    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Gender</th>
+                        <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">School Name</th>
+    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Class</th>
+    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Roll No</th>
+
+
+
+    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Time</th>
+        <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Category</th>
+    <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {attendanceData.map((student, idx) => (
+                <tr key={idx} className={idx % 2 === 0 ? "bg-gray-900" : "bg-gray-950"}>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.name}</td>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.gender}</td>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.schoolName}</td>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.className || student.class}</td>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.roll}</td>
+                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A"}</td>
+                    <td className="py-3 px-4 sm:py-4 sm:px-6">{student.category}</td>
+                  <td className={`py-3 px-4 sm:py-4 sm:px-6 font-semibold ${student.name ? "text-green-400" : "text-red-400"}`}>
+                    {student.name ? "Present" : "Not Present"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      {!loading && selectedClass && attendanceData.length === 0 && (
+        <p className="text-gray-500 italic mt-10 text-center">
+          No attendance records found for this class.
+        </p>
+      )}
+
+      {!selectedClass && !loading && (
+        <p className="text-gray-500 mt-10 text-center">
+          Please select a class to view attendance.
+        </p>
+      )}
+
     </div>
   );
 }

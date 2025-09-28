@@ -113,7 +113,7 @@ if (navigator.onLine) {
       ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-      const label = matchedStudent ? `${matchedStudent.name} (${matchedStudent.class})` : "Unknown";
+      const label = matchedStudent ? `${matchedStudent.name} class(${matchedStudent.class? matchedStudent.class:matchedStudent.className})` : "Unknown";
       ctx.font = "16px Arial";
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
@@ -155,7 +155,7 @@ if (navigator.onLine) {
              students: recognized.map((stu) => ({
       name: stu.name,
       roll: stu.roll,
-      className: stu.class,
+     className: stu.class,
     })),
     timestamp: new Date().toISOString(),
           })
