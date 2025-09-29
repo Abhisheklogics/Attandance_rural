@@ -11,7 +11,7 @@ function Page() {
   const canvasRef = useRef(null);
   const router = useRouter();
 
-const [student, setStudent] = useState({ name: "", roll: "", className: "", parentNumber: "",category:"",gender:"", schoolName:""});
+const [student, setStudent] = useState({ name: "", roll: "", className: "", parentNumber: "",gender:"", schoolName:""});
 
 
   const [classes, setClasses] = useState([]);
@@ -114,7 +114,10 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
     draw();
   }, []);
 
-
+  const stopVideo = () => {
+    const stream = videoRef.current?.srcObject;
+    if (stream) stream.getTracks().forEach((track) => track.stop());
+  };
   const capturePhoto = async () => {
     if (loading) return;
     setLoading(true);
@@ -155,9 +158,11 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
           });
           const data = await res.json();
           alert(data.message || "Student registered successfully!");
+          stopVideo()
         } else {
           await saveStudentOffline(payload);
           toast.success("Saved offline! Will sync when online.");
+          stopVideo()
         }
 
         setEmbeddingsArray([]);
@@ -235,14 +240,7 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
   required
   className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
 />
-<input
-  type="text"
-  placeholder="Category (General/OBC/SC/ST)"
-  value={student.category}
-  onChange={(e) => setStudent({ ...student, category: e.target.value })}
-  required
-  className="border border-gray-300 rounded-lg px-4 py-2"
-/>
+
 
 <select
   value={student.gender}

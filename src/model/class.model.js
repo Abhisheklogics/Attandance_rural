@@ -11,7 +11,7 @@ const studentSchema = new mongoose.Schema(
     category: {
     type: String,
     enum: ["GEN", "OBC", "SC", "ST"], // example allowed values
-    required: true
+    
   },
     gender: { type: String, enum: ["Male", "Female", "Other"], required: true },
     schoolName: { type: String, required: true },

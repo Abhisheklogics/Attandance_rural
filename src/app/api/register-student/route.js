@@ -4,7 +4,7 @@ import ClassOne from "@/model/class.model";
 export async function POST(req) {
   try {
     await connectToDb();
-    const { name, roll, className, embeddings, parentNumber, gender, schoolName,category } = await req.json();
+    const { name, roll, className, embeddings, parentNumber, gender, schoolName } = await req.json();
 
     // Required fields validation
     if (!name || !roll || !className || !embeddings || !parentNumber || !gender || !schoolName) {
@@ -27,7 +27,7 @@ export async function POST(req) {
       student.embeddings = embeddings;
       student.gender = gender;
       student.schoolName = schoolName;
-      student.category=category
+      
 
 
       await student.save();
@@ -36,8 +36,7 @@ export async function POST(req) {
     }
 
     // Create new student
-    student = await ClassOne.create({ name, roll, class: className, parentNumber, embeddings, gender, schoolName ,category
-});
+    student = await ClassOne.create({ name, roll, class: className, parentNumber, embeddings, gender, schoolName  });
     return new Response(JSON.stringify({ message: "Student registered successfully!" }), { status: 201 });
 
   } catch (err) {
