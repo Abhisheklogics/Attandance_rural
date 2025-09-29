@@ -14,23 +14,24 @@ export default function Layout({ children }) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col  text-white">
-      
+    <div className="min-h-screen flex flex-col bg-gray-950 text-white">
       {/* Header */}
-      <header className="p-4 shadow-md flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Teacher Dashboard</h1>
+      <header className="p-4 sm:p-6 shadow-md flex justify-between items-center bg-blue-900">
+        <h1 className="text-xl sm:text-2xl font-bold tracking-wide">
+          Teacher Dashboard
+        </h1>
         <button
-          className="sm:hidden px-3 py-2 rounded-md"
+          className="sm:hidden px-3 py-2 rounded-md bg-blue-700/50 hover:bg-blue-700 transition"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? "Close" : "Menu"}
         </button>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
         {/* Sidebar */}
         <aside
-          className={`fixed sm:static inset-y-0 left-0 w-64  p-6 flex flex-col gap-4 rounded-tr-3xl rounded-br-3xl transform ${
+          className={`fixed sm:static top-0 left-0 h-full w-64 bg-gradient-to-b from-blue-900 to-indigo-950 p-6 flex flex-col gap-4 transform ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           } transition-transform duration-300 ease-in-out sm:translate-x-0 z-50`}
         >
@@ -38,7 +39,7 @@ export default function Layout({ children }) {
             <Link
               key={link.href}
               href={link.href}
-              className="px-4 py-3 rounded-lg bg-blue-700/40 hover:bg-gray-700/60 transition-colors duration-200 text-center sm:text-left font-medium shadow-sm"
+              className="px-4 py-3 rounded-lg bg-blue-700/30 hover:bg-blue-600/60 transition-colors duration-200 font-medium shadow-sm text-center sm:text-left"
               onClick={() => setIsOpen(false)}
             >
               {link.label}
@@ -55,7 +56,7 @@ export default function Layout({ children }) {
         )}
 
         {/* Main content */}
-        <main className=" md:w-[400px] flex-1 p-6 sm:ml-64  rounded-tl-3xl rounded-bl-3xl shadow-inner">
+        <main className=" md:ml-[0px] flex-1 p-6 sm:p-10 sm:ml-64 bg-gray-900/30 rounded-tl-3xl rounded-bl-3xl shadow-inner overflow-y-auto">
           {children}
         </main>
       </div>

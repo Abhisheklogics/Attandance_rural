@@ -5,7 +5,9 @@
   "registerDesc": "Capture student facial data easily and securely.",
   "attendanceTitle": "Mark Attendance",
   "attendanceDesc": "Quickly mark attendance with face recognition.",
-  "aboutTitle": "About System",
-  "aboutDesc": "Learn how this system helps rural schools improve attendance and reduce paperwork.",
+   
+    "aboutTitle": "About School Administration",
+    "aboutDesc": "Learn how this system helps school administrators manage students, teachers, and attendance efficiently.",
+  
   "footer": "© 2025 Abhishek Kumar Production"
 }
