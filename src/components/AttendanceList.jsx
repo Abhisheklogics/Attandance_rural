@@ -144,7 +144,7 @@ function AttendanceList() {
                 <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Class</th>
                 <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Roll No</th>
                 <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Time</th>
-                <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Category</th>
+
                 <th className="py-3 px-4 sm:py-4 sm:px-6 text-left font-semibold uppercase tracking-wider text-gray-200">Status</th>
               </tr>
             </thead>
@@ -157,7 +157,7 @@ function AttendanceList() {
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.className || student.class}</td>
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.roll}</td>
                   <td className="py-3 px-4 sm:py-4 sm:px-6">{student.timestamp ? new Date(student.timestamp).toLocaleString() : "N/A"}</td>
-                  <td className="py-3 px-4 sm:py-4 sm:px-6">{student.category}</td>
+                  
                   <td className={`py-3 px-4 sm:py-4 sm:px-6 font-semibold ${student.status === "Present" ? "text-green-400" : "text-red-400"}`}>
                     {student.status}
                   </td>

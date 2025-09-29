@@ -2,12 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as faceapi from "face-api.js";
-
-import {getAllStudentsOffline ,saveAttendanceOffline,getUnsyncedAttendance, markAttendanceSynced} from  '@/lib/indexedDB'
-
 import { useRouter } from "next/navigation";
 
-export default  function Attendance({ alldata }) {
+export default function Attendance({ alldata }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [students, setStudents] = useState([]);
@@ -17,68 +14,31 @@ export default  function Attendance({ alldata }) {
   const [detecting, setDetecting] = useState(false);
   const [attendanceMarked, setAttendanceMarked] = useState(false);
   const [inputSize, setInputSize] = useState(160);
-  
-const [snapshotImage, setSnapshotImage] = useState(null);
 
   const router = useRouter();
-let data;
+
   useEffect(() => {
     function getAdaptiveInput() {
       return window.innerWidth < 768 ? 160 : 224;
     }
     setInputSize(getAdaptiveInput());
   }, []);
-useEffect(() => {
-  async function syncAttendance() {
-    if (!navigator.onLine) return;
-
-    // 1. Offline IndexedDB se sab unsynced records lao
-    const unsynced = await getUnsyncedAttendance();
-
-    for (let record of unsynced) {
-      try {
-        // 2. Server pe bhej do
-        await fetch("/api/mark", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-    students: record.students,
-    timestamp: record.timestamp
-  }),
-        });
-
-        // 3. IndexedDB me record ko synced flag karo
-        await markAttendanceSynced(record.id);
-      } catch (e) {
-        console.error("Attendance sync failed:", e);
-      }
-    }
-  }
-
-  window.addEventListener("online", syncAttendance);
-  return () => window.removeEventListener("online", syncAttendance);
-}, []);
-
-
 
   useEffect(() => {
     const load = async () => {
+      // Load face-api models
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
         faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
         faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
       ]);
-if (navigator.onLine) {
-  const res = await fetch(`/api/students?class=${alldata}`);
-   data = await res.json();
-  setStudents(data);
-} else {
- data = await getAllStudentsOffline(alldata); 
-  console.log('Locally fetched successfully');
-  setStudents(data);
-}
 
+      // Fetch students online only
+      const res = await fetch(`/api/students?class=${alldata}`);
+      const data = await res.json();
+      setStudents(data);
 
+      // Prepare labeled descriptors
       const labeled = data.map((stu) => {
         const descriptors = stu.embeddings.map((emb) => new Float32Array(emb));
         return new faceapi.LabeledFaceDescriptors(stu.name, descriptors);
@@ -87,6 +47,7 @@ if (navigator.onLine) {
 
       startVideo(facingMode);
     };
+
     load();
     return () => stopVideo();
   }, [facingMode]);
@@ -105,109 +66,88 @@ if (navigator.onLine) {
     if (stream) stream.getTracks().forEach((track) => track.stop());
   };
 
-const takeSnapshot = (video) => {
-  if (!video || video.readyState < 2) return null;
-  const snapshotCanvas = document.createElement("canvas");
-  snapshotCanvas.width = video.videoWidth;
-  snapshotCanvas.height = video.videoHeight;
-  const ctx = snapshotCanvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
-  return snapshotCanvas.toDataURL("image/png");
-};
+  const onPlay = async () => {
+    if (!videoRef.current || !matcher || detecting) return;
+    setDetecting(true);
 
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const displaySize = { width: video.videoWidth, height: video.videoHeight };
+    faceapi.matchDimensions(canvas, displaySize);
 
- const onPlay = async () => {
-  if (!videoRef.current || !matcher || detecting) return;
-  setDetecting(true);
+    const detectLoop = async () => {
+      if (video.paused || video.ended) {
+        setDetecting(false);
+        return;
+      }
 
-  const video = videoRef.current;
-  const canvas = canvasRef.current;
-  const displaySize = { width: video.videoWidth, height: video.videoHeight };
-  faceapi.matchDimensions(canvas, displaySize);
+      const detections = await faceapi
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
-  const detect = async () => {
-    if (video.paused || video.ended) {
-      setDetecting(false);
-      return;
-    }
+      const resized = faceapi.resizeResults(detections, displaySize);
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const detections = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.5 }))
-      .withFaceLandmarks()
-      .withFaceDescriptors();
+      const recognized = [];
 
-    const resized = faceapi.resizeResults(detections, displaySize);
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      resized.forEach((det) => {
+        const bestMatch = matcher.findBestMatch(det.descriptor);
+        const matchedStudent = students.find((s) => s.name === bestMatch.label);
+        const box = det.detection.box;
 
-    const recognized = [];
-    resized.forEach((det) => {
-      const best = matcher.findBestMatch(det.descriptor);
-      const matchedStudent = students.find((s) => s.name === best.label);
-      const box = det.detection.box;
+        ctx.strokeStyle = matchedStudent ? "#12439eff" : "#ef4444";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-      ctx.strokeStyle = matchedStudent ? "#12439eff" : "#ef4444";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
+        const label = matchedStudent
+          ? `Name: ${matchedStudent.name} -> class(${matchedStudent.class || matchedStudent.className})`
+          : "Unknown";
 
-      const label = matchedStudent ? `Name:${matchedStudent.name} -> class(${matchedStudent.class? matchedStudent.class:matchedStudent.className})` : "Unknown";
-      ctx.font = "16px Arial";
-      ctx.fillStyle = "rgba(0,0,0,0.5)";
-      ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
-      ctx.fillStyle = "#fff";
-      ctx.fillText(label, box.x + 5, box.y - 8);
+        ctx.font = "16px Arial";
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(box.x, box.y - 24, ctx.measureText(label).width + 10, 20);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, box.x + 5, box.y - 8);
 
-      if (matchedStudent) recognized.push(matchedStudent);
-    });
-
-    setRecognizedList(recognized);
-
-    
-   if (!attendanceMarked && recognized.length > 0) {
-  setAttendanceMarked(true);
-
-  const snapshot = takeSnapshot(video);
-  stopVideo();
-
-  try {
-    const attendancePayload = recognized.map((stu) => ({
-      name: stu.name,
-      roll: stu.roll,
-      className: stu.class || stu.className,
-      timestamp: new Date().toISOString(), 
-    }));
-const now = new Date().toISOString();
-    if (navigator.onLine) {
-      await fetch("/api/mark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          students: attendancePayload,
-          timestamp: now
-        }),
+        if (matchedStudent) recognized.push(matchedStudent);
       });
-      alert(`Attendance marked for: ${recognized.map((s) => s.name).join(", ")}`);
-    } else {
-      await saveAttendanceOffline({
-        students: attendancePayload,
-        timestamp: now
-      });
-      alert("Offline attendance saved. Will sync when online ✅");
-    }
 
-    router.push("/teacher/show-attandance");
-  } catch (err) {
-    console.error("Mark attendance failed:", err);
-  }
+      setRecognizedList(recognized);
 
-  return;
-}
+      if (!attendanceMarked && recognized.length > 0) {
+        setAttendanceMarked(true);
+        stopVideo();
 
-    if (!attendanceMarked) requestAnimationFrame(detect);
+        const now = new Date().toISOString();
+        const attendancePayload = recognized.map((stu) => ({
+          name: stu.name,
+          roll: stu.roll,
+          className: stu.class || stu.className,
+          timestamp: now,
+        }));
+
+        try {
+          await fetch("/api/mark", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ students: attendancePayload }),
+          });
+          alert(`Attendance marked for: ${recognized.map((s) => s.name).join(", ")}`);
+          router.push("/teacher/show-attandance");
+        } catch (err) {
+          console.error("Attendance marking failed:", err);
+        }
+
+        return;
+      }
+
+      requestAnimationFrame(detectLoop);
+    };
+
+    requestAnimationFrame(detectLoop);
   };
-
-  requestAnimationFrame(detect);
-};
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center py-6 px-2">
@@ -235,6 +175,7 @@ const now = new Date().toISOString();
     </div>
   );
 }
+
 
 
 

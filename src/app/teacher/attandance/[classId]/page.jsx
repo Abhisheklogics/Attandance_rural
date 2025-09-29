@@ -20,7 +20,7 @@ export default async function page({ params }) {
 
 
   return (
-    <div className='md:ml-[-250px]'>
+    <div className='md:ml-[50px]'>
      
       <Attendance alldata={classId}/>
     </div>

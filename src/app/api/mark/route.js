@@ -14,12 +14,19 @@ export async function POST(req) {
       );
     }
 
-    // Saare students ko ek hi baar insert karenge
+    // Ensure timestamp is valid
+    const ts = timestamp ? new Date(timestamp) : new Date();
+    if (isNaN(ts.getTime())) {
+      // Invalid date fallback
+      console.warn("Invalid timestamp received, using current date");
+    }
+
+    // Prepare entries
     const entries = students.map((stu) => ({
       name: stu.name,
       roll: stu.roll,
-      class: stu.className,
-      timestamp: new Date(timestamp), // <-- yahan timestamp aa raha hai
+      class: stu.className || stu.class,
+      timestamp: isNaN(ts.getTime()) ? new Date() : ts, // ensure valid Date
     }));
 
     await Attendance.insertMany(entries);

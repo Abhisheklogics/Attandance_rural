@@ -8,7 +8,7 @@ export default async function page() {
 
 
   return (
-    <div className="md:ml-[-250px]">
+    <div className="md:ml-[50px]">
       <h2 className="  text-2xl  text-center font-bold mb-4 text-white">Registrasition for Class </h2>
      <NewAttendanceList/>
     </div>

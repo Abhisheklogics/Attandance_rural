@@ -17,7 +17,7 @@ export async function GET(req) {
 
     let students = await ClassOne.find(
         { class: className },
-        { name: 1, roll: 1, class: 1, embeddings: 1, _id: 0 }
+        { name: 1, roll: 1, class: 1, embeddings: 1,gender:1,schoolName:1,category:1, _id: 0 }
       );
       return new Response(JSON.stringify(students), { status: 200 });
 

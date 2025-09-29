@@ -123,7 +123,7 @@ const [student, setStudent] = useState({ name: "", roll: "", className: "", pare
       const detection = await faceapi
         .detectSingleFace(
           videoRef.current,
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })
+          new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 })
         )
         .withFaceLandmarks()
         .withFaceDescriptor();

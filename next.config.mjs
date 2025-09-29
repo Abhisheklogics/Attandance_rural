@@ -20,6 +20,7 @@ const withPWA = nextPWA({
     // app shell routes
     { url: '/app/admin', revision: '1' },
     { url: '/app/studentFace', revision: '1' },
+     { url: '/', revision: '1' },
   ],
 
   runtimeCaching: [
